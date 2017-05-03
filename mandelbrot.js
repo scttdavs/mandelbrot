@@ -5,14 +5,10 @@
   else if (typeof module != 'undefined') module.exports = definition();
   else context[name] = definition();
 }('mandlebrot', this, () => {
-  const mandelbrot = {};
-
-  const getEl = (id) => document.getElementById(id);
-
   /*
    * Initialize canvas
    */
-  const canvas = getEl("canvas");
+  const canvas = document.getElementById("canvas");
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
 
@@ -24,24 +20,80 @@
   const x_interval = width * 2 / canvas.width; // -2 to 2
   const y_interval = 4 / canvas.height; // -2 to 2
 
-  const square = (value) => Math.pow(value, 2);
+  const m = {
+    ctx,
+    imgData,
 
-  const absValue = (complexNumber) => {
-    return Math.sqrt(square(complexNumber.real) + square(complexNumber.imaginary));
-  }
+    square(value) {
+      return Math.pow(value, 2);
+    },
 
-  const complexNumber = (real, imaginary) => ({
-    real,
-    imaginary
-  });
+    absValue(complexNumber) {
+      return Math.sqrt(m.square(complexNumber.real) + m.square(complexNumber.imaginary));
+    },
 
-  // z^2 + c
-  // (zR^2 - zI^2, 2 * zR * zI) + (cR, cI)
-  const getZ = (z, c) => {
-    console.time("z");
-    const ret = complexNumber(square(z.real) - square(z.imaginary) + c.real, 2 * z.real * z.imaginary + c.imaginary);
-    console.timeEnd("z");
-    return ret;
+    complexNumber(real, imaginary) {
+      return {
+        real,
+        imaginary
+      };
+    },
+
+    getAlpha(iterations) {
+      return iterations / 80 * 255;
+    },
+
+    // z^2 + c
+    // (zR^2 - zI^2, 2 * zR * zI) + (cR, cI)
+    getZ(z, c) {
+      // console.time("z");
+      const ret = m.complexNumber(m.square(z.real) - m.square(z.imaginary) + c.real, 2 * z.real * z.imaginary + c.imaginary);
+      // console.timeEnd("z");
+      return ret;
+    },
+
+    getIterations(c, escapeRadius, maxIterations) {
+      let Zr = 0;
+      let Zi = 0;
+      let Tr = 0;
+      let Ti = 0;
+      let n  = 0;
+
+      for ( ; n < maxIterations && (Tr + Ti) <= escapeRadius; ++n) {
+        Zi = 2 * Zr * Zi + c.imaginary;
+        Zr = Tr - Ti + c.real;
+        Tr = Zr * Zr;
+        Ti = Zi * Zi;
+      }
+
+      return n;
+    },
+
+    draw() {
+      let yPixel = 0
+      for (let y = 2; y >= -2; y -= y_interval) {
+        let offset = 0;
+        yPixel++;
+
+        // build line of pixel data to render
+        // console.time("oneline");
+        for(let x = -width; x <= width; x += x_interval) {
+          // console.time("iterations");
+          const iterations = m.getIterations(m.complexNumber(x, y), 10, 80);
+          // console.timeEnd("iterations");
+
+          m.imgData.data[offset++] = 0;
+          m.imgData.data[offset++] = 0;
+          m.imgData.data[offset++] = 0;
+          m.imgData.data[offset++] = m.getAlpha(iterations);
+        }
+        // console.timeEnd("oneline");
+        // render it
+        // setTimeout(() => ctx.putImageData(imgData, 0, y), 0);
+        m.ctx.putImageData(imgData, 0, yPixel);
+        // console.log(imgData);
+      }
+    }
   };
 
   // const getIterations = (c, maxIterations) => {
@@ -59,52 +111,5 @@
   //   return iterations;
   // }
 
-  function getIterations(c, escapeRadius, maxIterations)
-  {
-    var Zr = 0;
-    var Zi = 0;
-    var Tr = 0;
-    var Ti = 0;
-    var n  = 0;
-
-    for ( ; n<maxIterations && (Tr+Ti)<=escapeRadius; ++n ) {
-      Zi = 2 * Zr * Zi + c.imaginary;
-      Zr = Tr - Ti + c.real;
-      Tr = Zr * Zr;
-      Ti = Zi * Zi;
-    }
-
-    return n;
-  }
-
-  const getAlpha = (iterations) => {
-    // if (iterations == 80) return 0;
-    return iterations / 80 * 255;
-  }
-
-  let yPixel = 0
-  for (let y = 2; y >= -2; y -= y_interval) {
-    let offset = 0;
-    yPixel++;
-
-    // build line of pixel data to render
-    console.time("oneline");
-    for(let x = -width; x <= width; x += x_interval) {
-      // console.time("iterations");
-      const iterations = getIterations(complexNumber(x, y), 10, 80);
-      // console.timeEnd("iterations");
-
-      imgData.data[offset++] = 0;
-      imgData.data[offset++] = 0;
-      imgData.data[offset++] = 0;
-      imgData.data[offset++] = getAlpha(iterations);
-    }
-    console.timeEnd("oneline");
-    // render it
-    // setTimeout(() => ctx.putImageData(imgData, 0, y), 0);
-    ctx.putImageData(imgData, 0, yPixel);
-    console.log(imgData);
-  }
-
-  return mandelbrot;
+  return m;
 });
