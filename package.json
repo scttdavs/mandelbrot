@@ -1,0 +1,34 @@
+{
+  "name": "mandelbrot",
+  "version": "0.0.1",
+  "description": "Mandelbrot viewer",
+  "main": "index.html",
+  "scripts": {
+    "test": "grunt test",
+    "uglify": "grunt uglify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://scttdavs@github.com/scttdavs/mandelbrot.git"
+  },
+  "keywords": [
+    "fractals",
+    "mandelbrot"
+  ],
+  "author": "Scott Davis (scttdavs)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/scttdavs/mandelbrot/issues"
+  },
+  "homepage": "https://github.com/scttdavs/mandelbrot#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "coveralls": "^2.11.9",
+    "grunt": "^0.4.5",
+    "grunt-contrib-uglify": "^1.0.1",
+    "grunt-mocha-istanbul": "^3.0.1",
+    "istanbul": "^0.4.2",
+    "mocha": "^2.4.5",
+    "mocha-lcov-reporter": "^1.2.0"
+  }
+}
