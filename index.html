@@ -3,7 +3,14 @@
   <head>
     <link href="./styles.css" media="all" rel="stylesheet">
   </head>
-  <body onload="mandlebrot.draw()">
+  <body onload="mandlebrot.init()">
+    <div id="controls">
+      <label for="maxIterations">max iterations</label>
+      <input id="maxIterations" type="number" value=50 />
+
+      <label for="escapeRadius">escape radius</label>
+      <input id="escapeRadius" type="number" value=5 />
+    </div>
     <div>
       <canvas id="canvas" />
     </div>

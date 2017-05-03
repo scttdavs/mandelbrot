@@ -12,13 +12,15 @@
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  const width = 1.6 * (canvas.width / canvas.height); // -2 to 2
+  const yMax = 1.2;
+
+  const width = yMax * (canvas.width / canvas.height); // -2 to 2
 
   const ctx = canvas.getContext('2d');
   const imgData = ctx.createImageData(canvas.width, 1);
 
   const x_interval = width * 2 / canvas.width; // -2 to 2
-  const y_interval = 3.2 / canvas.height; // -2 to 2
+  const y_interval = yMax * 2 / canvas.height; // -2 to 2
 
   const m = {
     maxIterations: 50,
@@ -57,7 +59,7 @@
 
     draw() {
       let yPixel = 0
-      for (let y = 1.6; y >= -1.6; y -= y_interval) {
+      for (let y = yMax; y >= -yMax; y -= y_interval) {
         let offset = 0;
         yPixel++;
 
@@ -76,6 +78,23 @@
         // render it
         m.ctx.putImageData(imgData, 0, yPixel);
       }
+    },
+
+    bindListeners() {
+      document.getElementById("maxIterations").addEventListener("change", (e) => {
+        m.maxIterations = e.target.value;
+        m.draw();
+      });
+
+      document.getElementById("escapeRadius").addEventListener("change", (e) => {
+        m.escapeRadius = e.target.value;
+        m.draw();
+      });
+    },
+
+    init() {
+      m.bindListeners();
+      m.draw();
     }
   };
 
