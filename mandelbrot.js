@@ -37,15 +37,15 @@
 
     getColor(iterations) {
       // if (iterations[0] === 80) return 255;
-      return 255 - (iterations[0] / m.maxIterations * 255);
+      return 255 - (iterations / m.maxIterations * 255);
     },
 
     getIterations(c) {
-      let Zr = 0;
-      let Zi = 0;
-      let Tr = 0;
-      let Ti = 0;
-      let n  = 0;
+      let Zr = 0,
+          Zi = 0,
+          Tr = 0,
+          Ti = 0,
+          n  = 0;
 
       for ( ; n < m.maxIterations && (Tr + Ti) <= m.escapeRadius; ++n) {
         Zi = 2 * Zr * Zi + c.imaginary;
@@ -54,7 +54,7 @@
         Ti = Zi * Zi;
       }
 
-      return [n, Ti + Tr];
+      return n;
     },
 
     draw() {
@@ -97,21 +97,6 @@
       m.draw();
     }
   };
-
-  // const getIterations = (c, maxIterations) => {
-  //   const escapeValue = 2; // 2 is our outer range
-  //   let iterations = 0;
-  //   let z = getZ(complexNumber(0, 0), c);
-  //
-  //   while(absValue(z) <= escapeValue && iterations < maxIterations) {
-  //     // console.log(z, absValue(z));
-  //     z = getZ(z, c);
-  //     iterations++;
-  //   }
-  //
-  //   // console.log(iterations);
-  //   return iterations;
-  // }
 
   return m;
 });

@@ -21,3 +21,15 @@ body {
   left: 0;
   width: 100%;
 }
+
+label {
+  font-family: arial, sans-serif;
+}
+
+input {
+  border: 0;
+  background-color: #eeeeee;
+  padding: 5px 8px;
+  border-radius: 3px;
+  margin-right: 10px;
+}
