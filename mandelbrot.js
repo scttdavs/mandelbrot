@@ -45,8 +45,11 @@
     yPixel: 0,
     y: yMax,
     color: false,
+    lastUpdatedAt: 0,
     progressBar: document.getElementById("progressBar"),
+    totalTime: document.getElementById("totalTime"),
 
+    // https://gist.github.com/mjackson/5311256#file-color-conversion-algorithms-js-L119
     hsvToRgb(h, s, v) {
       let r, g, b;
 
@@ -81,6 +84,7 @@
 
       const value = iterations / m.maxIterations;
 
+      // adjusting hue and value to make colors look better (blue only)
       return m.hsvToRgb(.5 + value / 2, 1, 1 - value);
     },
 
@@ -89,9 +93,11 @@
           Zi = 0,
           Tr = 0,
           Ti = 0,
-          n  = 0;
+          n  = 0,
+          max = m.maxIterations,
+          escape = m.escapeRadius;
 
-      for ( ; n < m.maxIterations && (Tr + Ti) <= m.escapeRadius; n++) {
+      for ( ; n < max && (Tr + Ti) <= escape; n++) {
         Zi = 2 * Zr * Zi + imaginary;
         Zr = Tr - Ti + real;
         Tr = Zr * Zr;
@@ -110,6 +116,7 @@
         m.overlayCtx.lineTo(canvasOverlay.width, yPixel);
         m.overlayCtx.stroke();
       }
+
     },
 
     drawSingleLine(x) {
@@ -127,41 +134,44 @@
     },
 
     draw() {
+      if (!m.startTime) m.startTime = Date.now();
       m.yPixel++;
+
       m.drawSingleLine(m.boundaries.left);
       m.ctx.putImageData(imgData, 0, m.yPixel);
       m.y -= m.y_interval
 
-      if (m.y >= m.boundaries.bottom) {
+      if (m.yPixel <= window.innerHeight) {
         // not done, keep drawing
-        m.draw();
-        if (!m.waitToUpdate) {
-          // don't wait to update DOM every time
+        if (Date.now() - m.lastUpdatedAt > 200) {
+          // throttle updating DOM
+          m.lastUpdatedAt = Date.now();
           m.updateProgressLine(m.yPixel);
-          m.waitToUpdate = true;
-          setTimeout(() => {
-            // set to wait again so it only updates every 200ms
-            m.waitToUpdate = false;
-          }, 200);
+          // go to next tick so DOM can update
+          setTimeout(m.draw, 0);
+        } else {
+          m.draw();
         }
       } else {
         // done drawing, reset
-        m.updateProgressLine();
-        m.lastUpdatedAt = null;
         m.y = m.boundaries.top;
+        m.lastUpdatedAt = 0;
         m.yPixel = 0;
+        m.updateProgressLine();
+        m.totalTime.textContent = `${(Date.now() - m.startTime) / 1000}s`;
+        m.startTime = null;
       }
     },
 
     bindListeners() {
       // INPUT CONTROLS
       document.getElementById("maxIterations").addEventListener("change", (e) => {
-        m.maxIterations = e.target.value;
+        m.maxIterations = parseInt(e.target.value);
         m.draw();
       });
 
       document.getElementById("escapeRadius").addEventListener("change", (e) => {
-        m.escapeRadius = e.target.value;
+        m.escapeRadius = parseInt(e.target.value);
         m.draw();
       });
 
