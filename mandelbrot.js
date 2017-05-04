@@ -19,6 +19,9 @@
   const yMax = 1.2;
   const width = yMax * (canvas.width / canvas.height); // -2 to 2
 
+  const overlayCtx = canvasOverlay.getContext('2d');
+  overlayCtx.lineWidth = 2;
+  overlayCtx.strokeStyle = '#FF00FF';
   const ctx = canvas.getContext('2d');
   const imgData = ctx.createImageData(canvas.width, 1);
 
@@ -37,8 +40,12 @@
       left: -width
     },
     ctx,
+    overlayCtx,
     imgData,
+    yPixel: 0,
+    y: yMax,
     color: false,
+    progressBar: document.getElementById("progressBar"),
 
     hsvToRgb(h, s, v) {
       let r, g, b;
@@ -94,26 +101,74 @@
       return n;
     },
 
-    draw() {
-      let yPixel = 0
-      for (let y = m.boundaries.top; y >= m.boundaries.bottom; y -= m.y_interval) {
-        let offset = 0;
-        yPixel++;
+    updateProgressBar(yPixel) {
+      // if (percent === 0) {
+      //   // done
+      //   m.progressBar.style.display = "none";
+      // } else {
+      //   m.progressBar.style.width = `${window.innerWidth * percent}px`;
+      //   m.progressBar.style.display = "block";
+      // }
+      m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
 
-        // build line of pixel data to render
-        for(let x = m.boundaries.left; x <= m.boundaries.right; x += m.x_interval) {
-          const iterations = m.getIterations(x, y);
-          const color = m.getColor(iterations);
-
-          m.imgData.data[offset++] = color[0];
-          m.imgData.data[offset++] = color[1];
-          m.imgData.data[offset++] = color[2];
-          m.imgData.data[offset++] = 255;
-        }
-
-        // render it
-        m.ctx.putImageData(imgData, 0, yPixel);
+      // overlayCtx.lineWidth = 1;
+      // overlayCtx.strokeStyle = '#FF00FF';
+      if (yPixel) {
+        m.overlayCtx.beginPath();
+        m.overlayCtx.moveTo(0, yPixel);
+        m.overlayCtx.lineTo(canvasOverlay.width, yPixel);
+        m.overlayCtx.stroke();
       }
+
+    },
+
+    drawSingleLine(x) {
+      let offset = 0;
+      // build line of pixel data to render
+      for(; x <= m.boundaries.right; x += m.x_interval) {
+        const iterations = m.getIterations(x, m.y);
+        const color = m.getColor(iterations);
+
+        m.imgData.data[offset++] = color[0];
+        m.imgData.data[offset++] = color[1];
+        m.imgData.data[offset++] = color[2];
+        m.imgData.data[offset++] = 255;
+      }
+    },
+
+    draw() {
+      let offset = 0;
+      if (!m.lastUpdatedAt) m.lastUpdatedAt = new Date();
+      m.yPixel++;
+
+      m.drawSingleLine(m.boundaries.left);
+
+      if (new Date() - m.lastUpdatedAt > 200) {
+        // render it
+        m.lastUpdatedAt = new Date();
+        m.updateProgressBar(m.yPixel);
+        m.ctx.putImageData(imgData, 0, m.yPixel);
+        m.y -= m.y_interval
+        setTimeout(m.draw, 0);
+      } else {
+        m.ctx.putImageData(imgData, 0, m.yPixel);
+
+        m.y -= m.y_interval
+
+        if (m.y >= m.boundaries.bottom) {
+          // keep drawing
+          m.draw();
+        } else {
+          // done drawing, reset
+          m.ctx.putImageData(imgData, 0, m.yPixel);
+          m.updateProgressBar();
+          m.lastUpdatedAt = null;
+          m.y = m.boundaries.top;
+          m.yPixel = 0;
+        }
+      }
+
+
     },
 
     bindListeners() {
@@ -135,7 +190,6 @@
 
       // DRAG ZOOMING
       let zoomBox = null;
-      const canvasOverlayCtx = canvasOverlay.getContext("2d");
 
       canvasOverlay.addEventListener("mousedown", (e) => {
         zoomBox = [e.clientX, e.clientY, 0, 0];
@@ -143,17 +197,14 @@
 
       canvasOverlay.addEventListener("mousemove", (e) => {
         if (zoomBox) {
-          canvasOverlayCtx.lineWidth = 1;
-          canvasOverlayCtx.strokeStyle = '#FF00FF';
-
           // clear out old box first
-          canvasOverlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
+          m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
 
           // draw new box keeping aspect ratio
           zoomBox[2] = e.clientX;
           zoomBox[3] = zoomBox[1] + ((e.clientX - zoomBox[0]) / ratio);
 
-          canvasOverlayCtx.strokeRect(zoomBox[0], zoomBox[1], zoomBox[2] - zoomBox[0], zoomBox[3] - zoomBox[1]);
+          m.overlayCtx.strokeRect(zoomBox[0], zoomBox[1], zoomBox[2] - zoomBox[0], zoomBox[3] - zoomBox[1]);
         }
       });
 
@@ -164,11 +215,12 @@
           top: m.boundaries.top - m.y_interval * zoomBox[1],
           bottom: m.boundaries.top - m.y_interval * zoomBox[3]
         };
-        m.x_interval = Math.abs(m.boundaries.left - m.boundaries.right) / canvas.width;
-        m.y_interval = Math.abs(m.boundaries.top - m.boundaries.bottom) / canvas.height;
+        m.y = m.boundaries.top;
+        m.x_interval = Math.abs(m.boundaries.left - m.boundaries.right) / canvasOverlay.width;
+        m.y_interval = Math.abs(m.boundaries.top - m.boundaries.bottom) / canvasOverlay.height;
 
         zoomBox = null;
-        canvasOverlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
+        m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
         m.draw();
       });
     },
