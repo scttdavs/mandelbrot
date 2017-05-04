@@ -91,7 +91,7 @@
           Ti = 0,
           n  = 0;
 
-      for ( ; n < m.maxIterations && (Tr + Ti) <= m.escapeRadius; n++) {
+      for ( ; n < m.maxIterations && (Tr + Ti) <= m.escapeRadius; ++n) {
         Zi = 2 * Zr * Zi + imaginary;
         Zr = Tr - Ti + real;
         Tr = Zr * Zr;
@@ -102,14 +102,24 @@
     },
 
     updateProgressLine(yPixel) {
+      // if (percent === 0) {
+      //   // done
+      //   m.progressBar.style.display = "none";
+      // } else {
+      //   m.progressBar.style.width = `${window.innerWidth * percent}px`;
+      //   m.progressBar.style.display = "block";
+      // }
       m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
 
+      // overlayCtx.lineWidth = 1;
+      // overlayCtx.strokeStyle = '#FF00FF';
       if (yPixel) {
         m.overlayCtx.beginPath();
         m.overlayCtx.moveTo(0, yPixel);
         m.overlayCtx.lineTo(canvasOverlay.width, yPixel);
         m.overlayCtx.stroke();
       }
+
     },
 
     drawSingleLine(x) {
@@ -127,22 +137,24 @@
     },
 
     draw() {
+      let offset = 0;
+      if (!m.lastUpdatedAt) m.lastUpdatedAt = new Date();
       m.yPixel++;
+
       m.drawSingleLine(m.boundaries.left);
       m.ctx.putImageData(imgData, 0, m.yPixel);
       m.y -= m.y_interval
 
       if (m.y >= m.boundaries.bottom) {
         // not done, keep drawing
-        m.draw();
-        if (!m.waitToUpdate) {
-          // don't wait to update DOM every time
+        if (new Date() - m.lastUpdatedAt > 200) {
+          // throttle updating DOM
+          m.lastUpdatedAt = new Date();
           m.updateProgressLine(m.yPixel);
-          m.waitToUpdate = true;
-          setTimeout(() => {
-            // set to wait again so it only updates every 200ms
-            m.waitToUpdate = false;
-          }, 200);
+          // go to next tick so DOM can update
+          setTimeout(m.draw, 0);
+        } else {
+          m.draw();
         }
       } else {
         // done drawing, reset
