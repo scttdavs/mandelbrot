@@ -45,7 +45,9 @@
     yPixel: 0,
     y: yMax,
     color: false,
+    lastUpdatedAt: 0,
     progressBar: document.getElementById("progressBar"),
+    totalTime: document.getElementById("totalTime"),
 
     hsvToRgb(h, s, v) {
       let r, g, b;
@@ -89,9 +91,11 @@
           Zi = 0,
           Tr = 0,
           Ti = 0,
-          n  = 0;
+          n  = 0,
+          max = m.maxIterations,
+          escape = m.escapeRadius;
 
-      for ( ; n < m.maxIterations && (Tr + Ti) <= m.escapeRadius; ++n) {
+      for ( ; n < max && (Tr + Ti) <= escape; n++) {
         Zi = 2 * Zr * Zi + imaginary;
         Zr = Tr - Ti + real;
         Tr = Zr * Zr;
@@ -102,17 +106,8 @@
     },
 
     updateProgressLine(yPixel) {
-      // if (percent === 0) {
-      //   // done
-      //   m.progressBar.style.display = "none";
-      // } else {
-      //   m.progressBar.style.width = `${window.innerWidth * percent}px`;
-      //   m.progressBar.style.display = "block";
-      // }
       m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
 
-      // overlayCtx.lineWidth = 1;
-      // overlayCtx.strokeStyle = '#FF00FF';
       if (yPixel) {
         m.overlayCtx.beginPath();
         m.overlayCtx.moveTo(0, yPixel);
@@ -137,19 +132,18 @@
     },
 
     draw() {
-      let offset = 0;
-      if (!m.lastUpdatedAt) m.lastUpdatedAt = new Date();
+      if (!m.startTime) m.startTime = Date.now();
       m.yPixel++;
 
       m.drawSingleLine(m.boundaries.left);
       m.ctx.putImageData(imgData, 0, m.yPixel);
       m.y -= m.y_interval
 
-      if (m.y >= m.boundaries.bottom) {
+      if (m.yPixel <= window.innerHeight) {
         // not done, keep drawing
-        if (new Date() - m.lastUpdatedAt > 200) {
+        if (Date.now() - m.lastUpdatedAt > 200) {
           // throttle updating DOM
-          m.lastUpdatedAt = new Date();
+          m.lastUpdatedAt = Date.now();
           m.updateProgressLine(m.yPixel);
           // go to next tick so DOM can update
           setTimeout(m.draw, 0);
@@ -158,22 +152,24 @@
         }
       } else {
         // done drawing, reset
-        m.updateProgressLine();
-        m.lastUpdatedAt = null;
         m.y = m.boundaries.top;
+        m.lastUpdatedAt = 0;
         m.yPixel = 0;
+        m.updateProgressLine();
+        m.totalTime.textContent = `${(Date.now() - m.startTime) / 1000}s`;
+        m.startTime = null;
       }
     },
 
     bindListeners() {
       // INPUT CONTROLS
       document.getElementById("maxIterations").addEventListener("change", (e) => {
-        m.maxIterations = e.target.value;
+        m.maxIterations = parseInt(e.target.value);
         m.draw();
       });
 
       document.getElementById("escapeRadius").addEventListener("change", (e) => {
-        m.escapeRadius = e.target.value;
+        m.escapeRadius = parseInt(e.target.value);
         m.draw();
       });
 
