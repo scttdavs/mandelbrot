@@ -49,6 +49,7 @@
     progressBar: document.getElementById("progressBar"),
     totalTime: document.getElementById("totalTime"),
 
+    // https://gist.github.com/mjackson/5311256#file-color-conversion-algorithms-js-L119
     hsvToRgb(h, s, v) {
       let r, g, b;
 
@@ -83,6 +84,7 @@
 
       const value = iterations / m.maxIterations;
 
+      // adjusting hue and value to make colors look better (blue only)
       return m.hsvToRgb(.5 + value / 2, 1, 1 - value);
     },
 
