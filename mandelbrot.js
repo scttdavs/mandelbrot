@@ -101,7 +101,7 @@
       return n;
     },
 
-    updateProgressBar(yPixel) {
+    updateProgressLine(yPixel) {
       // if (percent === 0) {
       //   // done
       //   m.progressBar.style.display = "none";
@@ -142,33 +142,27 @@
       m.yPixel++;
 
       m.drawSingleLine(m.boundaries.left);
+      m.ctx.putImageData(imgData, 0, m.yPixel);
+      m.y -= m.y_interval
 
-      if (new Date() - m.lastUpdatedAt > 200) {
-        // render it
-        m.lastUpdatedAt = new Date();
-        m.updateProgressBar(m.yPixel);
-        m.ctx.putImageData(imgData, 0, m.yPixel);
-        m.y -= m.y_interval
-        setTimeout(m.draw, 0);
-      } else {
-        m.ctx.putImageData(imgData, 0, m.yPixel);
-
-        m.y -= m.y_interval
-
-        if (m.y >= m.boundaries.bottom) {
-          // keep drawing
-          m.draw();
+      if (m.y >= m.boundaries.bottom) {
+        // not done, keep drawing
+        if (new Date() - m.lastUpdatedAt > 200) {
+          // throttle updating DOM
+          m.lastUpdatedAt = new Date();
+          m.updateProgressLine(m.yPixel);
+          // go to next tick so DOM can update
+          setTimeout(m.draw, 0);
         } else {
-          // done drawing, reset
-          m.ctx.putImageData(imgData, 0, m.yPixel);
-          m.updateProgressBar();
-          m.lastUpdatedAt = null;
-          m.y = m.boundaries.top;
-          m.yPixel = 0;
+          m.draw();
         }
+      } else {
+        // done drawing, reset
+        m.updateProgressLine();
+        m.lastUpdatedAt = null;
+        m.y = m.boundaries.top;
+        m.yPixel = 0;
       }
-
-
     },
 
     bindListeners() {
