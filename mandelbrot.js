@@ -38,10 +38,43 @@
     },
     ctx,
     imgData,
+    color: false,
+
+    hsvToRgb(h, s, v) {
+      let r, g, b;
+
+      const i = Math.floor(h * 6);
+      const f = h * 6 - i;
+      const p = v * (1 - s);
+      const q = v * (1 - f * s);
+      const t = v * (1 - (1 - f) * s);
+
+      switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+      }
+
+      return [ r * 255, g * 255, b * 255 ];
+    },
 
     getColor(iterations) {
-      // if (iterations[0] === 80) return 255;
-      return 255 - (iterations / m.maxIterations * 255);
+      // grayscale
+      if (!m.color) {
+        const value = 255 - (iterations / m.maxIterations * 255)
+        return [value, value, value];
+      }
+
+      // color
+      if (iterations === 1) return [255, 255, 255];
+      if (iterations === m.maxIterations) return [0, 0, 0];
+
+      const value = iterations / m.maxIterations;
+
+      return m.hsvToRgb(.5 + value / 2, 1, 1 - value);
     },
 
     getIterations(real, imaginary) {
@@ -72,9 +105,9 @@
           const iterations = m.getIterations(x, y);
           const color = m.getColor(iterations);
 
-          m.imgData.data[offset++] = color;
-          m.imgData.data[offset++] = color;
-          m.imgData.data[offset++] = color;
+          m.imgData.data[offset++] = color[0];
+          m.imgData.data[offset++] = color[1];
+          m.imgData.data[offset++] = color[2];
           m.imgData.data[offset++] = 255;
         }
 
@@ -92,6 +125,11 @@
 
       document.getElementById("escapeRadius").addEventListener("change", (e) => {
         m.escapeRadius = e.target.value;
+        m.draw();
+      });
+
+      document.getElementById("color").addEventListener("change", (e) => {
+        m.color = e.target.checked;
         m.draw();
       });
 
