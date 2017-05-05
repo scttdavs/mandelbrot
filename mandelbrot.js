@@ -44,7 +44,9 @@
     imgData,
     yPixel: 0,
     y: yMax,
+    c: [-0.123, 0.745],
     color: false,
+    julia: false,
     lastUpdatedAt: 0,
     progressBar: document.getElementById("progressBar"),
     totalTime: document.getElementById("totalTime"),
@@ -89,19 +91,22 @@
     },
 
     getIterations(real, imaginary) {
-      let Zr = 0,
-          Zi = 0,
-          Tr = 0,
-          Ti = 0,
+      let Zr = m.julia ? real : 0,
+          Zi = m.julia ? imaginary : 0,
+          tempR,
+          tempI,
           n  = 0,
           max = m.maxIterations,
-          escape = m.escapeRadius;
+          escape = m.escapeRadius,
+          Cr = m.julia ? m.c[0] : real,
+          Ci = m.julia ? m.c[1] : imaginary;
 
-      for ( ; n < max && (Tr + Ti) <= escape; n++) {
-        Zi = 2 * Zr * Zi + imaginary;
-        Zr = Tr - Ti + real;
-        Tr = Zr * Zr;
-        Ti = Zi * Zi;
+      for ( ; n < max && Math.sqrt(Math.pow(Zr, 2) + Math.pow(Zi, 2)) <= escape; n++) {
+        tempR = Math.pow(Zr, 2) - Math.pow(Zi, 2) + Cr;
+        tempI = 2 * Zr * Zi + Ci;
+
+        Zr = tempR;
+        Zi = tempI;
       }
 
       return n;
@@ -163,6 +168,11 @@
       }
     },
 
+    getC(value) {
+      let values = value.trim().match(/-?(?:\d*\.)?\d+/g);
+      return [parseFloat(values[0]), parseFloat(values[1])];
+    },
+
     bindListeners() {
       // INPUT CONTROLS
       document.getElementById("maxIterations").addEventListener("change", (e) => {
@@ -177,6 +187,16 @@
 
       document.getElementById("color").addEventListener("change", (e) => {
         m.color = e.target.checked;
+        m.draw();
+      });
+
+      document.getElementById("julia").addEventListener("change", (e) => {
+        m.julia = e.target.checked;
+        m.draw();
+      });
+
+      document.getElementById("c").addEventListener("change", (e) => {
+        m.c = m.getC(e.target.value);
         m.draw();
       });
 
