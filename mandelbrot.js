@@ -216,6 +216,7 @@
         `r=${m.boundaries.right}`,
         `b=${m.boundaries.bottom}`
       ];
+      // TODO add getState method, maybe with a toParams method too
       const state = {
         mi: m.maxIterations,
         er: m.escapeRadius,
@@ -239,39 +240,28 @@
       m.updateState(e.state);
     },
 
+    setState(id, value) {
+      m[id] = value;
+      const el = helpers.getEl(id);
+      if (typeof value === "boolean") {
+        el.checked = value;
+      } else {
+        el.value = value;
+      }
+
+      m.draw();
+      m.pushState();
+    },
+
     bindListeners() {
       window.addEventListener('popstate', m.onPopState);
 
       // INPUT CONTROLS
-      helpers.getEl("maxIterations").addEventListener("change", (e) => {
-        m.maxIterations = parseInt(e.target.value);
-        m.draw();
-        m.pushState();
-      });
-
-      helpers.getEl("escapeRadius").addEventListener("change", (e) => {
-        m.escapeRadius = parseInt(e.target.value);
-        m.draw();
-        m.pushState();
-      });
-
-      helpers.getEl("color").addEventListener("change", (e) => {
-        m.color = e.target.checked;
-        m.draw();
-        m.pushState();
-      });
-
-      helpers.getEl("julia").addEventListener("change", (e) => {
-        m.julia = e.target.checked;
-        m.draw();
-        m.pushState();
-      });
-
-      helpers.getEl("c").addEventListener("change", (e) => {
-        m.c = m.getC(e.target.value);
-        m.draw();
-        m.pushState();
-      });
+      helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
+      helpers.getEl("escapeRadius").addEventListener("change", (e) => m.setState("escapeRadius", parseInt(e.target.value)));
+      helpers.getEl("color").addEventListener("change", (e) => m.setState("color", e.target.checked));
+      helpers.getEl("julia").addEventListener("change", (e) => m.setState("julia", e.target.checked));
+      helpers.getEl("c").addEventListener("change", (e) => m.setState("c", m.getC(e.target.value)));
 
       // DRAG ZOOMING
       let zoomBox = null;
@@ -294,6 +284,7 @@
       });
 
       canvasOverlay.addEventListener("mouseup", (e) => {
+        // TODO this needs state change logic
         m.boundaries = {
           left: m.boundaries.left + m.x_interval * zoomBox[0],
           right: m.boundaries.left + m.x_interval * zoomBox[2],
@@ -311,25 +302,14 @@
     },
 
     updateState(obj = {}) {
-      console.log(obj);
-      const color = obj.co;
-      helpers.getEl("color").checked = color;
-      m.color = color;
+      // TODO use setState with dirty logic so it only draws once
+      helpers.getEl("color").checked = m.color = obj.co;
+      helpers.getEl("julia").checked = m.julia = obj.j;
+      helpers.getEl("maxIterations").value = m.maxIterations = obj.mi;
+      helpers.getEl("escapeRadius").value = m.escapeRadius = obj.er;
 
-      const julia = obj.j;
-      helpers.getEl("julia").checked = julia;
-      m.julia = julia;
-
-      const maxIterations = obj.mi;
-      helpers.getEl("maxIterations").value = maxIterations;
-      m.maxIterations = maxIterations;
-
-      const escapeRadius = obj.er;
-      helpers.getEl("escapeRadius").value = escapeRadius;
-
-      const c = obj.c;
-      helpers.getEl("c").value = c; // need to format this first
-      m.c = c;
+      helpers.getEl("c").value = obj.c; // need to format this first
+      m.c = obj.c;
 
       m.draw();
     },
