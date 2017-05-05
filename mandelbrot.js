@@ -217,6 +217,7 @@
         `b=${m.boundaries.bottom}`
       ];
       // TODO add getState method, maybe with a toParams method too
+      // change keys to not be param names?
       const state = {
         mi: m.maxIterations,
         er: m.escapeRadius,
