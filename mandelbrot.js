@@ -20,7 +20,7 @@
   const width = yMax * (canvas.width / canvas.height); // -2 to 2
 
   const overlayCtx = canvasOverlay.getContext('2d');
-  overlayCtx.lineWidth = 2;
+  overlayCtx.lineWidth = 3;
   overlayCtx.strokeStyle = '#FF00FF';
   const ctx = canvas.getContext('2d');
   const imgData = ctx.createImageData(canvas.width, 1);

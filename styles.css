@@ -18,17 +18,28 @@ body {
 #controls {
   box-sizing: border-box;
   padding: 20px 30px;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.5);
   position: absolute;
   z-index: 999;
   top: 0;
-  left: 0;
-  width: 100%;
+  right: 0;
+  height: 100%;
+  max-width: 200px;
+}
+
+.control {
+  margin-bottom: 10px;
+}
+
+h1 {
+  color: #FF00FF;
+  font-weight: 900;
+  font-family: arial black, helvetica, arial, sans-serif;
 }
 
 label,
 span {
-  font-family: arial, sans-serif;
+  font-family: helvetica, arial, sans-serif;
 }
 
 input {
@@ -37,13 +48,4 @@ input {
   padding: 5px 8px;
   border-radius: 3px;
   margin-right: 10px;
-}
-
-#progressBar {
-  height: 3px;
-  background-color: #FF00FF;
-  transition: width 0.2s;
-  position: absolute;
-  left: 0;
-  bottom: -3px;
 }
