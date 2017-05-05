@@ -74,17 +74,20 @@
     },
 
     getColor(iterations) {
+      // smooth color by adjusting iteration count
+      const n = iterations.number - Math.log2(Math.log2(iterations.absoluteValue));
+
       // grayscale
       if (!m.color) {
-        const value = 255 - (iterations / m.maxIterations * 255)
+        const value = 255 - (n / m.maxIterations * 255)
         return [value, value, value];
       }
 
       // color
-      if (iterations === 1) return [255, 255, 255];
-      if (iterations === m.maxIterations) return [0, 0, 0];
+      if (n <= 1) return [255, 255, 255];
+      if (n >= m.maxIterations - 1) return [0, 0, 0];
 
-      const value = iterations / m.maxIterations;
+      const value = n / m.maxIterations;
 
       // adjusting hue and value to make colors look better (blue only)
       return m.hsvToRgb(.5 + value / 2, 1, 1 - value);
@@ -96,20 +99,22 @@
           tempR,
           tempI,
           n  = 0,
+          abs = 0,
           max = m.maxIterations,
           escape = m.escapeRadius,
           Cr = m.julia ? m.c[0] : real,
           Ci = m.julia ? m.c[1] : imaginary;
 
-      for ( ; n < max && Math.sqrt(Math.pow(Zr, 2) + Math.pow(Zi, 2)) <= escape; n++) {
+      for ( ; n < max && abs <= escape; n++) {
         tempR = Math.pow(Zr, 2) - Math.pow(Zi, 2) + Cr;
         tempI = 2 * Zr * Zi + Ci;
 
         Zr = tempR;
         Zi = tempI;
+        abs = Math.sqrt(Math.pow(Zr, 2) + Math.pow(Zi, 2));
       }
 
-      return n;
+      return {number: n, absoluteValue: abs};
     },
 
     updateProgressLine(yPixel) {
