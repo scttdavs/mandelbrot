@@ -20,7 +20,7 @@
   const width = yMax * (canvas.width / canvas.height); // -2 to 2
 
   const overlayCtx = canvasOverlay.getContext('2d');
-  overlayCtx.lineWidth = 2;
+  overlayCtx.lineWidth = 3;
   overlayCtx.strokeStyle = '#FF00FF';
   const ctx = canvas.getContext('2d');
   const imgData = ctx.createImageData(canvas.width, 1);
@@ -28,27 +28,53 @@
   const x_interval = width * 2 / canvas.width; // -2 to 2
   const y_interval = yMax * 2 / canvas.height; // -2 to 2
 
+  const helpers = {
+    getEl(id) {
+      return document.getElementById(id);
+    },
+
+    getParams() {
+      let params = window.location.search;
+      const f = {};
+      params.replace("?", "")
+            .split("&")
+            .map((p) => p.split("="))
+            .forEach((p) => f[p[0]] = p[1]);
+      return f;
+    },
+
+    getValue(param, value, fallback) {
+      const params = helpers.getParams();
+      return params[param] || value || fallback;
+    },
+
+    getBoolean(value) {
+      if (typeof value === "string") return value == "true";
+      return value;
+    }
+  }
+
+
   const m = {
-    maxIterations: 50,
-    escapeRadius: 5,
+    maxIterations: parseInt(helpers.getValue("mi", helpers.getEl("maxIterations").value, 50)),
+    escapeRadius: parseInt(helpers.getValue("er", helpers.getEl("escapeRadius").value, 5)),
     y_interval,
     x_interval,
     boundaries: {
-      top: yMax,
-      right: width,
-      bottom: -yMax,
-      left: -width
+      top: parseFloat(helpers.getValue("t", yMax)),
+      right: parseFloat(helpers.getValue("r", width)),
+      bottom: parseFloat(helpers.getValue("b", -yMax)),
+      left: parseFloat(helpers.getValue("l", -width))
     },
     ctx,
     overlayCtx,
     imgData,
     yPixel: 0,
-    y: yMax,
-    c: [-0.123, 0.745],
-    color: false,
-    julia: false,
+    y: parseFloat(helpers.getValue("t", yMax)),
+    c: [-0.123, 0.745], // TODO update this
+    color: helpers.getBoolean(helpers.getValue("co", helpers.getEl("color").checked, false)),
+    julia: helpers.getBoolean(helpers.getValue("j", helpers.getEl("julia").checked, false)),
     lastUpdatedAt: 0,
-    progressBar: document.getElementById("progressBar"),
     totalTime: document.getElementById("totalTime"),
 
     // https://gist.github.com/mjackson/5311256#file-color-conversion-algorithms-js-L119
@@ -178,32 +204,65 @@
       return [parseFloat(values[0]), parseFloat(values[1])];
     },
 
+    pushState(replace) {
+      const params = [
+        `mi=${m.maxIterations}`,
+        `er=${m.escapeRadius}`,
+        `co=${m.color}`,
+        `j=${m.julia}`,
+        `c=${m.c}`,
+        `l=${m.boundaries.left}`,
+        `t=${m.boundaries.top}`,
+        `r=${m.boundaries.right}`,
+        `b=${m.boundaries.bottom}`
+      ];
+      // TODO add getState method, maybe with a toParams method too
+      // change keys to not be param names?
+      const state = {
+        mi: m.maxIterations,
+        er: m.escapeRadius,
+        co: m.color,
+        j: m.julia,
+        c: m.c,
+        l: m.boundaries.left,
+        t: m.boundaries.top,
+        r: m.boundaries.right,
+        b: m.boundaries.bottom
+      };
+
+      if (replace) {
+        history.replaceState(state, "Mandelbrot",  `?${params.join("&")}`);
+      } else {
+        history.pushState(state, "Mandelbrot", `?${params.join("&")}`);
+      }
+    },
+
+    onPopState(e) {
+      m.updateState(e.state);
+    },
+
+    setState(id, value) {
+      m[id] = value;
+      const el = helpers.getEl(id);
+      if (typeof value === "boolean") {
+        el.checked = value;
+      } else {
+        el.value = value;
+      }
+
+      m.draw();
+      m.pushState();
+    },
+
     bindListeners() {
+      window.addEventListener('popstate', m.onPopState);
+
       // INPUT CONTROLS
-      document.getElementById("maxIterations").addEventListener("change", (e) => {
-        m.maxIterations = parseInt(e.target.value);
-        m.draw();
-      });
-
-      document.getElementById("escapeRadius").addEventListener("change", (e) => {
-        m.escapeRadius = parseInt(e.target.value);
-        m.draw();
-      });
-
-      document.getElementById("color").addEventListener("change", (e) => {
-        m.color = e.target.checked;
-        m.draw();
-      });
-
-      document.getElementById("julia").addEventListener("change", (e) => {
-        m.julia = e.target.checked;
-        m.draw();
-      });
-
-      document.getElementById("c").addEventListener("change", (e) => {
-        m.c = m.getC(e.target.value);
-        m.draw();
-      });
+      helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
+      helpers.getEl("escapeRadius").addEventListener("change", (e) => m.setState("escapeRadius", parseInt(e.target.value)));
+      helpers.getEl("color").addEventListener("change", (e) => m.setState("color", e.target.checked));
+      helpers.getEl("julia").addEventListener("change", (e) => m.setState("julia", e.target.checked));
+      helpers.getEl("c").addEventListener("change", (e) => m.setState("c", m.getC(e.target.value)));
 
       // DRAG ZOOMING
       let zoomBox = null;
@@ -226,6 +285,7 @@
       });
 
       canvasOverlay.addEventListener("mouseup", (e) => {
+        // TODO this needs state change logic
         m.boundaries = {
           left: m.boundaries.left + m.x_interval * zoomBox[0],
           right: m.boundaries.left + m.x_interval * zoomBox[2],
@@ -242,11 +302,28 @@
       });
     },
 
+    updateState(obj = {}) {
+      // TODO use setState with dirty logic so it only draws once
+      helpers.getEl("color").checked = m.color = obj.co;
+      helpers.getEl("julia").checked = m.julia = obj.j;
+      helpers.getEl("maxIterations").value = m.maxIterations = obj.mi;
+      helpers.getEl("escapeRadius").value = m.escapeRadius = obj.er;
+
+      helpers.getEl("c").value = obj.c; // need to format this first
+      m.c = obj.c;
+
+      m.draw();
+    },
+
     init() {
       m.bindListeners();
       m.draw();
+      m.pushState(true);
     }
   };
 
-  return m;
+  return {
+    helpers,
+    m
+  };
 });

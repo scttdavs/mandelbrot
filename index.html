@@ -3,25 +3,38 @@
   <head>
     <link href="./styles.css" media="all" rel="stylesheet">
   </head>
-  <body onload="mandlebrot.init()">
+  <body onload="mandlebrot.m.init()">
     <div id="controls">
-      <label for="maxIterations">max iterations</label>
-      <input id="maxIterations" type="number" value=50 />
+      <h1>M</h1>
+      <div class="control">
+        <label for="maxIterations">max iterations</label>
+        <input id="maxIterations" type="number" value=50 />
+      </div>
 
-      <label for="escapeRadius">escape radius</label>
-      <input id="escapeRadius" type="number" value=5 />
-      <label for="color">color</label>
-      <input id="color" type="checkbox" value=false />
+      <div class="control">
+        <label for="escapeRadius">escape radius</label>
+        <input id="escapeRadius" type="number" value=5 />
+      </div>
 
-      <label for="julia">julia</label>
-      <input id="julia" type="checkbox" value=false />
-      <label for="c">c=?</label>
-      <input id="c" type="text" value="-0.123 + 0.745i" />
+      <div class="control">
+        <label for="color">color</label>
+        <input id="color" type="checkbox" value=false />
+      </div>
 
-      <label>rendered in</label>
-      <span id="totalTime"></span>
+      <div class="control">
+        <div>
+          <label for="julia">julia</label>
+          <input id="julia" type="checkbox" value=false />
+        </div>
+        <label for="c">c=?</label>
+        <input id="c" type="text" value="-0.123 + 0.745i" />
+      </div>
 
-      <div id="progressBar"></div>
+      <div class="control">
+        <label>rendered in</label>
+        <span id="totalTime"></span>
+      </div>
+
     </div>
     <div>
       <canvas id="canvas"></canvas>
