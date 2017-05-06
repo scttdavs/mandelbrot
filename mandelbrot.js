@@ -86,6 +86,7 @@
     overlayCtx,
     imgData,
     yPixel: 0,
+    numUpdates: 0,
     y: parseFloat(helpers.getValue("t", yMax)),
     lastUpdatedAt: 0,
     totalTime: document.getElementById("totalTime"),
@@ -240,17 +241,36 @@
       m.updateState(e.state);
     },
 
-    setState(id, value) {
-      m.state[id] = value;
-      const el = helpers.getEl(id);
-      if (typeof value === "boolean") {
-        el.checked = value;
-      } else {
-        el.value = value;
+    render() {
+      m.numUpdates--
+      // wait till all updates are made
+      if (m.numUpdates === 0) {
+        // we're on the last one so let's update it
+        m.draw();
+        m.pushState();
       }
+    },
 
-      m.draw();
-      m.pushState();
+    setState(id, value) {
+      if (typeof id === "string") {
+        m.numUpdates++;
+        m.state[id] = value;
+        const el = helpers.getEl(id);
+        if (el) {
+          if (typeof value === "boolean") {
+            el.checked = value;
+          } else {
+            el.value = value;
+          }
+        }
+
+        setTimeout(m.render, 0);
+      } else {
+        // object
+        for (let prop in id) {
+          m.setState(prop, id[prop]);
+        }
+      }
     },
 
     bindListeners() {
@@ -284,43 +304,27 @@
       });
 
       canvasOverlay.addEventListener("mouseup", (e) => {
-        // TODO this needs state change logic
-        // order is significant here
+        m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
         const x_interval = m.x_interval();
         const y_interval = m.y_interval();
+        const top = m.state.top - y_interval * zoomBox[1];
 
-        m.state.right = m.state.left + x_interval * zoomBox[2];
-        m.state.left = m.state.left + x_interval * zoomBox[0];
-        m.state.bottom = m.state.top - y_interval * zoomBox[3];
-        m.state.top = m.state.top - y_interval * zoomBox[1];
+        m.y = top;
 
-        m.y = m.state.top;
+        m.setState({
+          right: m.state.left + x_interval * zoomBox[2],
+          left: m.state.left + x_interval * zoomBox[0],
+          bottom: m.state.top - y_interval * zoomBox[3],
+          top
+        });
 
         zoomBox = null;
-        m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
-        m.draw();
-        m.pushState();
       });
     },
 
     updateState(obj = {}) {
-      // TODO use setState with dirty logic so it only draws once
-      helpers.getEl("color").checked = m.state.color = obj.color;
-      helpers.getEl("julia").checked = m.state.julia = obj.julia;
-      helpers.getEl("maxIterations").value = m.state.maxIterations = obj.maxIterations;
-      helpers.getEl("escapeRadius").value = m.state.escapeRadius = obj.escapeRadius;
-
-      // TODO make function for this?
-      m.state.left = obj.left;
-      m.state.top = obj.top;
-      m.state.right = obj.right;
-      m.state.bottom = obj.bottom;
-      m.y = m.state.top;
-
-      helpers.getEl("c").value = obj.c; // need to format this first
-      m.state.c = obj.c;
-
-      m.draw();
+      m.setState(obj);
+      m.y = obj.top;
     },
 
     init() {
