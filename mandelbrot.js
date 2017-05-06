@@ -56,7 +56,8 @@
     escapeRadius: "er",
     color: "co",
     julia: "j",
-    c: "c",
+    ci: "ci",
+    cr: "cr",
     left: "l",
     top: "t",
     right: "r",
@@ -76,7 +77,8 @@
       escapeRadius: parseInt(helpers.getValue("er", helpers.getEl("escapeRadius").value, 5)),
       color: helpers.getBoolean(helpers.getValue("co", helpers.getEl("color").checked, false)),
       julia: helpers.getBoolean(helpers.getValue("j", helpers.getEl("julia").checked, false)),
-      c: [-0.123, 0.745], // TODO update this
+      ci: 0.745,
+      cr: -0.123,
       left: parseFloat(helpers.getValue("l", -width)),
       top: parseFloat(helpers.getValue("t", yMax)),
       right: parseFloat(helpers.getValue("r", width)),
@@ -142,8 +144,8 @@
           abs = 0,
           max = m.state.maxIterations,
           escape = m.state.escapeRadius,
-          Cr = m.state.julia ? m.state.c[0] : real,
-          Ci = m.state.julia ? m.state.c[1] : imaginary;
+          Cr = m.state.julia ? m.state.cr : real,
+          Ci = m.state.julia ? m.state.ci : imaginary;
 
       for ( ; n < max && abs <= escape; n++) {
         tempR = Math.pow(Zr, 2) - Math.pow(Zi, 2) + Cr;
@@ -215,11 +217,6 @@
       }
     },
 
-    getC(value) {
-      let values = value.trim().match(/-?(?:\d*\.)?\d+/g);
-      return [parseFloat(values[0]), parseFloat(values[1])];
-    },
-
     getParams() {
       const params = [];
       for (let key in m.state) {
@@ -238,20 +235,21 @@
     },
 
     onPopState(e) {
-      m.updateState(e.state);
+      m.setState(e.state, null, true);
+      m.y = e.state.top;
     },
 
-    render() {
+    render(noPushState) {
       m.numUpdates--
       // wait till all updates are made
       if (m.numUpdates === 0) {
         // we're on the last one so let's update it
         m.draw();
-        m.pushState();
+        if (!noPushState) m.pushState();
       }
     },
 
-    setState(id, value) {
+    setState(id, value, noPushState) {
       if (typeof id === "string") {
         m.numUpdates++;
         m.state[id] = value;
@@ -264,11 +262,11 @@
           }
         }
 
-        setTimeout(m.render, 0);
+        setTimeout(m.render.bind(this, noPushState), 0);
       } else {
         // object
         for (let prop in id) {
-          m.setState(prop, id[prop]);
+          m.setState(prop, id[prop], noPushState);
         }
       }
     },
@@ -281,7 +279,8 @@
       helpers.getEl("escapeRadius").addEventListener("change", (e) => m.setState("escapeRadius", parseInt(e.target.value)));
       helpers.getEl("color").addEventListener("change", (e) => m.setState("color", e.target.checked));
       helpers.getEl("julia").addEventListener("change", (e) => m.setState("julia", e.target.checked));
-      helpers.getEl("c").addEventListener("change", (e) => m.setState("c", m.getC(e.target.value)));
+      helpers.getEl("ci").addEventListener("change", (e) => m.setState("ci", parseFloat(e.target.value)));
+      helpers.getEl("cr").addEventListener("change", (e) => m.setState("cr", parseFloat(e.target.value)));
 
       // DRAG ZOOMING
       let zoomBox = null;
@@ -320,11 +319,6 @@
 
         zoomBox = null;
       });
-    },
-
-    updateState(obj = {}) {
-      m.setState(obj);
-      m.y = obj.top;
     },
 
     init() {
