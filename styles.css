@@ -37,6 +37,12 @@ h1 {
   font-family: arial black, helvetica, arial, sans-serif;
 }
 
+h1 img {
+  max-height: 26px;
+  display: inline-block;
+  margin-left: 3px;
+}
+
 label,
 span,
 .hint {
@@ -55,6 +61,7 @@ input {
   border: 0;
   background-color: #eeeeee;
   padding: 8px 10px;
+  margin-top: 2px;
   border-radius: 3px;
   font-size: 12px;
   box-sizing: border-box;
@@ -69,7 +76,7 @@ input[type="checkbox"] {
 
 input:focus {
   outline: 0;
-  border: solid 2px #FF00FF;
+  box-shadow: 0 0 0 2px #FF00FF;
 }
 
 hr {

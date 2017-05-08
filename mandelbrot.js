@@ -1,10 +1,11 @@
+/* globals document, window, history, define */
 "use strict";
 
 !function (name, context, definition) {
-  if (typeof define == 'function') define(definition);
-  else if (typeof module != 'undefined') module.exports = definition();
+  if (typeof define == "function") define(definition);
+  else if (typeof module != "undefined") module.exports = definition();
   else context[name] = definition();
-}('mandlebrot', this, () => {
+}("mandlebrot", this, () => {
   // INIT CANVAS
   const canvas = document.getElementById("canvas");
   const canvasOverlay = document.getElementById("canvasOverlay");
@@ -19,10 +20,10 @@
   const yMax = 1.2;
   const width = yMax * (canvas.width / canvas.height); // -2 to 2
 
-  const overlayCtx = canvasOverlay.getContext('2d');
+  const overlayCtx = canvasOverlay.getContext("2d");
   overlayCtx.lineWidth = 3;
-  overlayCtx.strokeStyle = '#FF00FF';
-  const ctx = canvas.getContext('2d');
+  overlayCtx.strokeStyle = "#FF00FF";
+  const ctx = canvas.getContext("2d");
   const imgData = ctx.createImageData(canvas.width, 1);
 
   const helpers = {
@@ -62,10 +63,9 @@
     top: "t",
     right: "r",
     bottom: "b"
-  }
+  };
 
   const m = {
-    escapeRadius: parseInt(helpers.getValue("er", helpers.getEl("escapeRadius").value, 5)),
     y_interval() {
       return Math.abs(m.state.top - m.state.bottom) / canvasOverlay.height;
     },
@@ -87,10 +87,10 @@
     ctx,
     overlayCtx,
     imgData,
-    yPixel: 0,
-    numUpdates: 0,
-    y: parseFloat(helpers.getValue("t", yMax)),
-    lastUpdatedAt: 0,
+    yPixel: 0, // the Y value of the canvas row we are on, used to track how close we are to being done
+    numUpdates: 0, // used for batch updating to only update DOM once per tick
+    y: parseFloat(helpers.getValue("t", yMax)), // the max y value of the complex plane
+    lastUpdatedAt: 0, // for tracking render time
     totalTime: document.getElementById("totalTime"),
 
     // https://gist.github.com/mjackson/5311256#file-color-conversion-algorithms-js-L119
@@ -121,13 +121,12 @@
 
       // grayscale
       if (!m.state.color) {
-        const value = 255 - (n / m.state.maxIterations * 255)
+        const value = 255 - (n / m.state.maxIterations * 255);
         return [value, value, value];
       }
 
       // color
-      if (n <= 1) return [255, 255, 255];
-      if (n >= m.state.maxIterations - 1) return [0, 0, 0];
+      if (n >= m.state.maxIterations - 1) return [0, 0, 0]; // return black if in fractal
 
       const value = n / m.state.maxIterations;
 
@@ -140,14 +139,12 @@
           Zi = m.state.julia ? imaginary : 0,
           tempR,
           tempI,
-          n  = 0,
+          n = 0,
           abs = 0,
-          max = m.state.maxIterations,
-          escape = m.state.escapeRadius,
           Cr = m.state.julia ? m.state.cr : real,
           Ci = m.state.julia ? m.state.ci : imaginary;
 
-      for ( ; n < max && abs <= escape; n++) {
+      for ( ; n < m.state.maxIterations && abs <= m.state.escapeRadius; n++) {
         tempR = Math.pow(Zr, 2) - Math.pow(Zi, 2) + Cr;
         tempI = 2 * Zr * Zi + Ci;
 
@@ -156,7 +153,7 @@
         abs = Math.sqrt(Math.pow(Zr, 2) + Math.pow(Zi, 2));
       }
 
-      return {number: n, absoluteValue: abs};
+      return { number: n, absoluteValue: abs };
     },
 
     updateProgressLine(yPixel) {
@@ -168,7 +165,6 @@
         m.overlayCtx.lineTo(canvasOverlay.width, yPixel);
         m.overlayCtx.stroke();
       }
-
     },
 
     drawSingleLine(x) {
@@ -188,7 +184,7 @@
 
     draw() {
       if (!m.startTime) m.startTime = Date.now();
-      m.yPixel++;
+      m.yPixel++; // update canvas row we are on for this iteration
 
       m.drawSingleLine(m.state.left);
       m.ctx.putImageData(imgData, 0, m.yPixel);
@@ -212,7 +208,7 @@
         m.lastUpdatedAt = 0;
         m.yPixel = 0;
         m.updateProgressLine();
-        m.totalTime.textContent = `${(Date.now() - m.startTime) / 1000}s`;
+        m.totalTime.textContent = `${(Date.now() - m.startTime) / 1000}s`; // TODO make this state change?
         m.startTime = null;
       }
     },
@@ -223,7 +219,7 @@
         params.push(`${paramMap[key]}=${m.state[key]}`);
       }
 
-      return `?${params.join("&")}`
+      return `?${params.join("&")}`;
     },
 
     pushState(replace) {
@@ -235,15 +231,27 @@
     },
 
     onPopState(e) {
+      // TODO do I really need this as separate method?
       m.setState(e.state, null, true);
       m.y = e.state.top;
     },
 
     render(noPushState) {
-      m.numUpdates--
-      // wait till all updates are made
-      if (m.numUpdates === 0) {
-        // we're on the last one so let's update it
+      if (m.numUpdates !== 0) m.numUpdates--; // only reduce if we've qeued up some updates
+
+      if (m.numUpdates === 0) { // wait till all updates are made
+        // update DOM
+        for (let prop in m.state) {
+          const el = helpers.getEl(prop);
+          if (el) {
+            const value = m.state[prop];
+            if (typeof value === "boolean") {
+              el.checked = value;
+            } else {
+              el.value = value;
+            }
+          }
+        }
         m.draw();
         if (!noPushState) m.pushState();
       }
@@ -253,14 +261,6 @@
       if (typeof id === "string") {
         m.numUpdates++;
         m.state[id] = value;
-        const el = helpers.getEl(id);
-        if (el) {
-          if (typeof value === "boolean") {
-            el.checked = value;
-          } else {
-            el.value = value;
-          }
-        }
 
         setTimeout(m.render.bind(this, noPushState), 0);
       } else {
@@ -272,7 +272,7 @@
     },
 
     bindListeners() {
-      window.addEventListener('popstate', m.onPopState);
+      window.addEventListener("popstate", m.onPopState);
 
       // INPUT CONTROLS
       helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
@@ -302,7 +302,7 @@
         }
       });
 
-      canvasOverlay.addEventListener("mouseup", (e) => {
+      canvasOverlay.addEventListener("mouseup", () => {
         m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
         const x_interval = m.x_interval();
         const y_interval = m.y_interval();
@@ -323,7 +323,7 @@
 
     init() {
       m.bindListeners();
-      m.draw();
+      m.render(true);
       m.pushState(true);
     }
   };
