@@ -4,7 +4,7 @@
   "description": "Mandelbrot viewer",
   "main": "index.html",
   "scripts": {
-    "test": "grunt test",
+    "test": "node_modules/karma/bin/karma start",
     "uglify": "grunt uglify"
   },
   "repository": {
@@ -29,7 +29,15 @@
     "grunt-contrib-uglify": "^1.0.1",
     "grunt-mocha-istanbul": "^3.0.1",
     "istanbul": "^0.4.2",
+    "karma": "^0.13.22",
+    "karma-chai": "^0.1.0",
+    "karma-lasso": "^2.0.0",
+    "karma-mocha": "^1.0.1",
+    "karma-mocha-reporter": "^2.0.4",
+    "karma-phantomjs-launcher": "^1.0.0",
+    "lasso": "^2.5.3",
     "mocha": "^2.4.5",
-    "mocha-lcov-reporter": "^1.2.0"
+    "mocha-lcov-reporter": "^1.2.0",
+    "phantomjs-prebuilt": "^2.1.7"
   }
 }
