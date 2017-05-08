@@ -1,10 +1,11 @@
+/* globals document, window, history, define */
 "use strict";
 
 !function (name, context, definition) {
-  if (typeof define == 'function') define(definition);
-  else if (typeof module != 'undefined') module.exports = definition();
+  if (typeof define == "function") define(definition);
+  else if (typeof module != "undefined") module.exports = definition();
   else context[name] = definition();
-}('mandlebrot', this, () => {
+}("mandlebrot", this, () => {
   // INIT CANVAS
   const canvas = document.getElementById("canvas");
   const canvasOverlay = document.getElementById("canvasOverlay");
@@ -19,10 +20,10 @@
   const yMax = 1.2;
   const width = yMax * (canvas.width / canvas.height); // -2 to 2
 
-  const overlayCtx = canvasOverlay.getContext('2d');
+  const overlayCtx = canvasOverlay.getContext("2d");
   overlayCtx.lineWidth = 3;
-  overlayCtx.strokeStyle = '#FF00FF';
-  const ctx = canvas.getContext('2d');
+  overlayCtx.strokeStyle = "#FF00FF";
+  const ctx = canvas.getContext("2d");
   const imgData = ctx.createImageData(canvas.width, 1);
 
   const helpers = {
@@ -62,7 +63,7 @@
     top: "t",
     right: "r",
     bottom: "b"
-  }
+  };
 
   const m = {
     y_interval() {
@@ -120,7 +121,7 @@
 
       // grayscale
       if (!m.state.color) {
-        const value = 255 - (n / m.state.maxIterations * 255)
+        const value = 255 - (n / m.state.maxIterations * 255);
         return [value, value, value];
       }
 
@@ -218,7 +219,7 @@
         params.push(`${paramMap[key]}=${m.state[key]}`);
       }
 
-      return `?${params.join("&")}`
+      return `?${params.join("&")}`;
     },
 
     pushState(replace) {
@@ -271,7 +272,7 @@
     },
 
     bindListeners() {
-      window.addEventListener('popstate', m.onPopState);
+      window.addEventListener("popstate", m.onPopState);
 
       // INPUT CONTROLS
       helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
@@ -301,7 +302,7 @@
         }
       });
 
-      canvasOverlay.addEventListener("mouseup", (e) => {
+      canvasOverlay.addEventListener("mouseup", () => {
         m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
         const x_interval = m.x_interval();
         const y_interval = m.y_interval();
