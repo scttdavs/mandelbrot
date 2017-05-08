@@ -240,10 +240,23 @@
     },
 
     render(noPushState) {
-      m.numUpdates--
+      if (m.numUpdates !== 0) m.numUpdates--;
       // wait till all updates are made
       if (m.numUpdates === 0) {
         // we're on the last one so let's update it
+
+        // update DOM
+        for (let prop in m.state) {
+          const el = helpers.getEl(prop);
+          if (el) {
+            const value = m.state[prop];
+            if (typeof value === "boolean") {
+              el.checked = value;
+            } else {
+              el.value = value;
+            }
+          }
+        }
         m.draw();
         if (!noPushState) m.pushState();
       }
@@ -253,14 +266,6 @@
       if (typeof id === "string") {
         m.numUpdates++;
         m.state[id] = value;
-        const el = helpers.getEl(id);
-        if (el) {
-          if (typeof value === "boolean") {
-            el.checked = value;
-          } else {
-            el.value = value;
-          }
-        }
 
         setTimeout(m.render.bind(this, noPushState), 0);
       } else {
@@ -323,7 +328,7 @@
 
     init() {
       m.bindListeners();
-      m.draw();
+      m.render(true);
       m.pushState(true);
     }
   };
