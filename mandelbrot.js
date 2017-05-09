@@ -285,39 +285,45 @@
       // DRAG ZOOMING
       let zoomBox = null;
 
-      canvasOverlay.addEventListener("mousedown", (e) => {
-        zoomBox = [e.clientX, e.clientY, 0, 0];
-      });
-
-      canvasOverlay.addEventListener("mousemove", (e) => {
-        if (zoomBox) {
-          // clear out old box first
-          m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
-
-          // draw new box keeping aspect ratio
-          zoomBox[2] = e.clientX;
-          zoomBox[3] = zoomBox[1] + ((e.clientX - zoomBox[0]) / ratio);
-
-          m.overlayCtx.strokeRect(zoomBox[0], zoomBox[1], zoomBox[2] - zoomBox[0], zoomBox[3] - zoomBox[1]);
-        }
-      });
-
-      canvasOverlay.addEventListener("mouseup", () => {
-        m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
-        const x_interval = m.x_interval();
-        const y_interval = m.y_interval();
-        const top = m.state.top - y_interval * zoomBox[1];
-
-        m.y = top;
-
-        m.setState({
-          right: m.state.left + x_interval * zoomBox[2],
-          left: m.state.left + x_interval * zoomBox[0],
-          bottom: m.state.top - y_interval * zoomBox[3],
-          top
+      ["mousedown", "touchstart"].forEach((downEvent) => {
+        canvasOverlay.addEventListener(downEvent, (e) => {
+          zoomBox = [e.clientX, e.clientY, 0, 0];
         });
+      });
 
-        zoomBox = null;
+      ["mousemove", "touchmove"].forEach((moveEvent) => {
+        canvasOverlay.addEventListener(moveEvent, (e) => {
+          if (zoomBox) {
+            // clear out old box first
+            m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
+
+            // draw new box keeping aspect ratio
+            zoomBox[2] = e.clientX;
+            zoomBox[3] = zoomBox[1] + ((e.clientX - zoomBox[0]) / ratio);
+
+            m.overlayCtx.strokeRect(zoomBox[0], zoomBox[1], zoomBox[2] - zoomBox[0], zoomBox[3] - zoomBox[1]);
+          }
+        });
+      });
+
+      ["mouseup", "touchend"].forEach((upEvent) => {
+        canvasOverlay.addEventListener(upEvent, () => {
+          m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
+          const x_interval = m.x_interval();
+          const y_interval = m.y_interval();
+          const top = m.state.top - y_interval * zoomBox[1];
+
+          m.y = top;
+
+          m.setState({
+            right: m.state.left + x_interval * zoomBox[2],
+            left: m.state.left + x_interval * zoomBox[0],
+            bottom: m.state.top - y_interval * zoomBox[3],
+            top
+          });
+
+          zoomBox = null;
+        });
       });
     },
 
