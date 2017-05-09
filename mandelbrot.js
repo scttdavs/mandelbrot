@@ -6,25 +6,9 @@
   else if (typeof module != "undefined") module.exports = definition();
   else context[name] = definition();
 }("mandlebrot", this, () => {
-  // INIT CANVAS
+  // save and set canvas elements
   const canvas = document.getElementById("canvas");
   const canvasOverlay = document.getElementById("canvasOverlay");
-
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
-  canvasOverlay.width  = window.innerWidth;
-  canvasOverlay.height = window.innerHeight;
-
-  const ratio = canvas.width / canvas.height;
-
-  const yMax = 1.2;
-  const width = yMax * (canvas.width / canvas.height); // -2 to 2
-
-  const overlayCtx = canvasOverlay.getContext("2d");
-  overlayCtx.lineWidth = 3;
-  overlayCtx.strokeStyle = "#FF00FF";
-  const ctx = canvas.getContext("2d");
-  const imgData = ctx.createImageData(canvas.width, 1);
 
   const helpers = {
     getEl(id) {
@@ -43,7 +27,17 @@
 
     getValue(param, value, fallback) {
       const params = helpers.getParams();
-      return params[param] || value || fallback;
+      let ret;
+
+      // we need to account for 0 values on purpose
+      if (params[param] !== undefined) {
+        ret = params[param];
+      } else if (value !== undefined) {
+        ret = value;
+      } else if (fallback !== undefined) {
+        ret = fallback;
+      }
+      return ret;
     },
 
     getBoolean(value) {
@@ -59,19 +53,12 @@
     julia: "j",
     ci: "ci",
     cr: "cr",
-    left: "l",
-    top: "t",
-    right: "r",
-    bottom: "b"
+    zi: "zi",
+    zr: "zr",
+    interval: "i"
   };
 
   const m = {
-    y_interval() {
-      return Math.abs(m.state.top - m.state.bottom) / canvasOverlay.height;
-    },
-    x_interval() {
-      return Math.abs(m.state.left - m.state.right) / canvasOverlay.width;
-    },
     state: {
       maxIterations: parseInt(helpers.getValue("mi", helpers.getEl("maxIterations").value, 50)),
       escapeRadius: parseInt(helpers.getValue("er", helpers.getEl("escapeRadius").value, 5)),
@@ -79,19 +66,37 @@
       julia: helpers.getBoolean(helpers.getValue("j", helpers.getEl("julia").checked, false)),
       ci: parseFloat(helpers.getValue("ci", 0.745)),
       cr: parseFloat(helpers.getValue("cr", -0.123)),
-      left: parseFloat(helpers.getValue("l", -width)),
-      top: parseFloat(helpers.getValue("t", yMax)),
-      right: parseFloat(helpers.getValue("r", width)),
-      bottom: parseFloat(helpers.getValue("b", -yMax))
+      zi: parseFloat(helpers.getValue("zi", 0)),
+      zr: parseFloat(helpers.getValue("zr", 0)),
+      interval: parseFloat(helpers.getValue("i", ( () => {
+        if (canvas.width > canvas.height) {
+          return 0.3 * 2 / canvas.height;
+        } else {
+          return 0.3 * 2 / canvas.width;
+        }
+      } )()))
     },
-    ctx,
-    overlayCtx,
-    imgData,
     yPixel: 0, // the Y value of the canvas row we are on, used to track how close we are to being done
     numUpdates: 0, // used for batch updating to only update DOM once per tick
-    y: parseFloat(helpers.getValue("t", yMax)), // the max y value of the complex plane
+    y: null, // the max y value of the complex plane, set in m.draw()
     lastUpdatedAt: 0, // for tracking render time
     totalTime: document.getElementById("totalTime"),
+
+    getXMax() {
+      return m.state.zr + (m.state.interval * canvas.width / 2);
+    },
+
+    getXMin() {
+      return m.state.zr - (m.state.interval * canvas.width / 2);
+    },
+
+    getYMax() {
+      return m.state.zi + (m.state.interval * canvas.height / 2);
+    },
+
+    getYMin() {
+      return m.state.zi - (m.state.interval * canvas.height / 2);
+    },
 
     // https://gist.github.com/mjackson/5311256#file-color-conversion-algorithms-js-L119
     hsvToRgb(h, s, v) {
@@ -126,12 +131,11 @@
       }
 
       // color
-      if (n >= m.state.maxIterations - 1) return [0, 0, 0]; // return black if in fractal
-
       const value = n / m.state.maxIterations;
 
       // adjusting hue and value to make colors look better (blue only)
-      return m.hsvToRgb(.5 + value / 2, 1, 1 - value);
+      // return m.hsvToRgb(.5 + value / 2, 1, 1 - value);
+      return m.hsvToRgb(Math.abs(value), 1, 1 - value);
     },
 
     getIterations(real, imaginary) {
@@ -169,9 +173,9 @@
 
     drawSingleLine(x) {
       let offset = 0;
-      const x_interval = m.x_interval();
+      const xMax = m.getXMax();
       // build line of pixel data to render
-      for(; x <= m.state.right; x += x_interval) {
+      for(; x <= xMax; x += m.state.interval) {
         const iterations = m.getIterations(x, m.y);
         const color = m.getColor(iterations);
 
@@ -184,12 +188,13 @@
 
     draw() {
       if (!m.startTime) m.startTime = Date.now();
+      if (!m.y) m.y = m.getYMax();
       m.yPixel++; // update canvas row we are on for this iteration
+      const xMin = m.getXMin();
 
-      m.drawSingleLine(m.state.left);
-      m.ctx.putImageData(imgData, 0, m.yPixel);
-      const y_interval = m.y_interval();
-      m.y -= y_interval;
+      m.drawSingleLine(xMin);
+      m.ctx.putImageData(m.imgData, 0, m.yPixel);
+      m.y -= m.state.interval;
 
       if (m.yPixel <= window.innerHeight) {
         // not done, keep drawing
@@ -204,9 +209,9 @@
         }
       } else {
         // done drawing, reset
-        m.y = m.state.top;
         m.lastUpdatedAt = 0;
         m.yPixel = 0;
+        m.y = m.getYMax();
         m.updateProgressLine();
         m.totalTime.textContent = `${(Date.now() - m.startTime) / 1000}s`; // TODO make this state change?
         m.startTime = null;
@@ -233,7 +238,7 @@
     onPopState(e) {
       // TODO do I really need this as separate method?
       m.setState(e.state, null, true);
-      m.y = e.state.top;
+      m.y = m.getYMax();
     },
 
     render(noPushState) {
@@ -274,6 +279,21 @@
     bindListeners() {
       window.addEventListener("popstate", m.onPopState);
 
+      // debounce this event
+      window.addEventListener("resize", ( () => {
+        let timeout;
+
+        return () => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => {
+            // do resize stuff
+            m.initCanvas();
+            m.render(true);
+          }, 200);
+        };
+
+      } )());
+
       // INPUT CONTROLS
       helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
       helpers.getEl("escapeRadius").addEventListener("change", (e) => m.setState("escapeRadius", parseInt(e.target.value)));
@@ -285,44 +305,67 @@
       // DRAG ZOOMING
       let zoomBox = null;
 
-      canvasOverlay.addEventListener("mousedown", (e) => {
-        zoomBox = [e.clientX, e.clientY, 0, 0];
+      ["mousedown", "touchstart"].forEach((downEvent) => {
+        canvasOverlay.addEventListener(downEvent, (e) => {
+          zoomBox = [e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY, 0, 0];
+        });
       });
 
-      canvasOverlay.addEventListener("mousemove", (e) => {
-        if (zoomBox) {
-          // clear out old box first
+      ["mousemove", "touchmove"].forEach((moveEvent) => {
+        canvasOverlay.addEventListener(moveEvent, (e) => {
+          if (zoomBox) {
+            // clear out old box first
+            m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
+
+            // draw new box keeping aspect ratio
+            zoomBox[2] = e.clientX || e.touches[0].clientX;
+            zoomBox[3] = zoomBox[1] + (( (e.clientX || e.touches[0].clientX) - zoomBox[0]) / m.ratio);
+
+            m.overlayCtx.strokeRect(zoomBox[0], zoomBox[1], zoomBox[2] - zoomBox[0], zoomBox[3] - zoomBox[1]);
+          }
+        });
+      });
+
+      ["mouseup", "touchend"].forEach((upEvent) => {
+        canvasOverlay.addEventListener(upEvent, () => {
           m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
 
-          // draw new box keeping aspect ratio
-          zoomBox[2] = e.clientX;
-          zoomBox[3] = zoomBox[1] + ((e.clientX - zoomBox[0]) / ratio);
+          const getVal = (pixel) => {
+            return pixel * m.state.interval;
+          };
 
-          m.overlayCtx.strokeRect(zoomBox[0], zoomBox[1], zoomBox[2] - zoomBox[0], zoomBox[3] - zoomBox[1]);
-        }
-      });
+          m.setState({
+            interval: Math.abs(getVal(zoomBox[2]) - getVal(zoomBox[0])) / canvas.width,
+            zr: m.getXMin() + getVal(zoomBox[0]) + getVal(Math.abs(zoomBox[2] - zoomBox[0]) / 2),
+            zi: m.getYMax() - getVal(zoomBox[1]) - getVal(Math.abs(zoomBox[3] - zoomBox[1]) / 2)
+          });
 
-      canvasOverlay.addEventListener("mouseup", () => {
-        m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
-        const x_interval = m.x_interval();
-        const y_interval = m.y_interval();
-        const top = m.state.top - y_interval * zoomBox[1];
+          m.y = m.getYMax();
 
-        m.y = top;
-
-        m.setState({
-          right: m.state.left + x_interval * zoomBox[2],
-          left: m.state.left + x_interval * zoomBox[0],
-          bottom: m.state.top - y_interval * zoomBox[3],
-          top
+          zoomBox = null;
         });
-
-        zoomBox = null;
       });
+    },
+
+    initCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvasOverlay.width  = window.innerWidth;
+      canvasOverlay.height = window.innerHeight;
+
+      m.overlayCtx = canvasOverlay.getContext("2d");
+      m.overlayCtx.lineWidth = 3;
+      m.overlayCtx.strokeStyle = "#FF00FF";
+      m.ctx = canvas.getContext("2d");
+
+      m.ratio = canvas.width / canvas.height;
+
+      m.imgData = m.ctx.createImageData(canvas.width, 1);
     },
 
     init() {
       m.bindListeners();
+      m.initCanvas();
       m.render(true);
       m.pushState(true);
     }
