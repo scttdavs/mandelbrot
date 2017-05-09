@@ -70,9 +70,9 @@
       zr: parseFloat(helpers.getValue("zr", 0)),
       interval: parseFloat(helpers.getValue("i", ( () => {
         if (canvas.width > canvas.height) {
-          return 1.2 * 2 / canvas.height;
+          return 0.3 * 2 / canvas.height;
         } else {
-          return 1.2 * 2 / canvas.width;
+          return 0.3 * 2 / canvas.width;
         }
       } )()))
     },
