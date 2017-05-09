@@ -6,22 +6,14 @@
   else if (typeof module != "undefined") module.exports = definition();
   else context[name] = definition();
 }("mandlebrot", this, () => {
-  // INIT CANVAS
+  // save and set canvas elements
   const canvas = document.getElementById("canvas");
   const canvasOverlay = document.getElementById("canvasOverlay");
-
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
-  canvasOverlay.width  = window.innerWidth;
-  canvasOverlay.height = window.innerHeight;
-
-  const ratio = canvas.width / canvas.height;
 
   const overlayCtx = canvasOverlay.getContext("2d");
   overlayCtx.lineWidth = 3;
   overlayCtx.strokeStyle = "#FF00FF";
   const ctx = canvas.getContext("2d");
-  const imgData = ctx.createImageData(canvas.width, 1);
 
   const helpers = {
     getEl(id) {
@@ -91,7 +83,6 @@
     },
     ctx,
     overlayCtx,
-    imgData,
     yPixel: 0, // the Y value of the canvas row we are on, used to track how close we are to being done
     numUpdates: 0, // used for batch updating to only update DOM once per tick
     y: null, // the max y value of the complex plane, set in m.draw()
@@ -209,7 +200,7 @@
       const xMin = m.getXMin();
 
       m.drawSingleLine(xMin);
-      m.ctx.putImageData(imgData, 0, m.yPixel);
+      m.ctx.putImageData(m.imgData, 0, m.yPixel);
       m.y -= m.state.interval;
 
       if (m.yPixel <= window.innerHeight) {
@@ -295,6 +286,21 @@
     bindListeners() {
       window.addEventListener("popstate", m.onPopState);
 
+      // debounce this event
+      window.addEventListener("resize", ( () => {
+        let timeout;
+
+        return () => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => {
+            // do resize stuff
+            m.initCanvas();
+            m.render(true);
+          }, 200);
+        };
+
+      } )());
+
       // INPUT CONTROLS
       helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
       helpers.getEl("escapeRadius").addEventListener("change", (e) => m.setState("escapeRadius", parseInt(e.target.value)));
@@ -320,7 +326,7 @@
 
             // draw new box keeping aspect ratio
             zoomBox[2] = e.clientX;
-            zoomBox[3] = zoomBox[1] + ((e.clientX - zoomBox[0]) / ratio);
+            zoomBox[3] = zoomBox[1] + ((e.clientX - zoomBox[0]) / m.ratio);
 
             m.overlayCtx.strokeRect(zoomBox[0], zoomBox[1], zoomBox[2] - zoomBox[0], zoomBox[3] - zoomBox[1]);
           }
@@ -348,8 +354,20 @@
       });
     },
 
+    initCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvasOverlay.width  = window.innerWidth;
+      canvasOverlay.height = window.innerHeight;
+
+      m.ratio = canvas.width / canvas.height;
+
+      m.imgData = ctx.createImageData(canvas.width, 1);
+    },
+
     init() {
       m.bindListeners();
+      m.initCanvas();
       m.render(true);
       m.pushState(true);
     }
