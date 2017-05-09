@@ -10,11 +10,6 @@
   const canvas = document.getElementById("canvas");
   const canvasOverlay = document.getElementById("canvasOverlay");
 
-  const overlayCtx = canvasOverlay.getContext("2d");
-  overlayCtx.lineWidth = 3;
-  overlayCtx.strokeStyle = "#FF00FF";
-  const ctx = canvas.getContext("2d");
-
   const helpers = {
     getEl(id) {
       return document.getElementById(id);
@@ -81,8 +76,6 @@
         }
       } )()))
     },
-    ctx,
-    overlayCtx,
     yPixel: 0, // the Y value of the canvas row we are on, used to track how close we are to being done
     numUpdates: 0, // used for batch updating to only update DOM once per tick
     y: null, // the max y value of the complex plane, set in m.draw()
@@ -314,7 +307,7 @@
 
       ["mousedown", "touchstart"].forEach((downEvent) => {
         canvasOverlay.addEventListener(downEvent, (e) => {
-          zoomBox = [e.clientX, e.clientY, 0, 0];
+          zoomBox = [e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY, 0, 0];
         });
       });
 
@@ -325,8 +318,8 @@
             m.overlayCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
 
             // draw new box keeping aspect ratio
-            zoomBox[2] = e.clientX;
-            zoomBox[3] = zoomBox[1] + ((e.clientX - zoomBox[0]) / m.ratio);
+            zoomBox[2] = e.clientX || e.touches[0].clientX;
+            zoomBox[3] = zoomBox[1] + (( (e.clientX || e.touches[0].clientX) - zoomBox[0]) / m.ratio);
 
             m.overlayCtx.strokeRect(zoomBox[0], zoomBox[1], zoomBox[2] - zoomBox[0], zoomBox[3] - zoomBox[1]);
           }
@@ -360,9 +353,14 @@
       canvasOverlay.width  = window.innerWidth;
       canvasOverlay.height = window.innerHeight;
 
+      m.overlayCtx = canvasOverlay.getContext("2d");
+      m.overlayCtx.lineWidth = 3;
+      m.overlayCtx.strokeStyle = "#FF00FF";
+      m.ctx = canvas.getContext("2d");
+
       m.ratio = canvas.width / canvas.height;
 
-      m.imgData = ctx.createImageData(canvas.width, 1);
+      m.imgData = m.ctx.createImageData(canvas.width, 1);
     },
 
     init() {
