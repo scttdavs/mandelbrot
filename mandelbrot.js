@@ -126,12 +126,11 @@
       }
 
       // color
-      if (n >= m.state.maxIterations - 1) return [0, 0, 0]; // return black if in fractal
-
       const value = n / m.state.maxIterations;
 
       // adjusting hue and value to make colors look better (blue only)
-      return m.hsvToRgb(.5 + value / 2, 1, 1 - value);
+      // return m.hsvToRgb(.5 + value / 2, 1, 1 - value);
+      return m.hsvToRgb(Math.abs(value), 1, 1 - value);
     },
 
     getIterations(real, imaginary) {
