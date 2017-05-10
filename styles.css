@@ -34,6 +34,23 @@ body {
   }
 }
 
+#reset {
+  background-color: #FF00FF;
+  border: 0;
+  border-radius: 3px;
+  color: #FFFFFF;
+  font-size: 16px;
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 15px;
+}
+
+@media (min-width: 480px) {
+  #reset {
+    font-size: 12px;
+  }
+}
+
 #navIcon {
   width: 40px;
   height: 40px;

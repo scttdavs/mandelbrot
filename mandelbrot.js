@@ -58,23 +58,25 @@
     interval: "i"
   };
 
+  const getInitialInterval = () => {
+    if (window.innerWidth > window.innerHeight) {
+      return 1.2 * 2 / window.innerHeight;
+    } else {
+      return 1.2 * 2 / window.innerWidth;
+    }
+  };
+
   const m = {
     state: {
       maxIterations: parseInt(helpers.getValue("mi", helpers.getEl("maxIterations").value, 50)),
       escapeRadius: parseInt(helpers.getValue("er", helpers.getEl("escapeRadius").value, 5)),
       color: helpers.getBoolean(helpers.getValue("co", helpers.getEl("color").checked, false)),
       julia: helpers.getBoolean(helpers.getValue("j", helpers.getEl("julia").checked, false)),
-      ci: parseFloat(helpers.getValue("ci", 0.745)),
-      cr: parseFloat(helpers.getValue("cr", -0.123)),
+      ci: parseFloat(helpers.getValue("ci", 0.15)),
+      cr: parseFloat(helpers.getValue("cr", -0.79)),
       zi: parseFloat(helpers.getValue("zi", 0)),
       zr: parseFloat(helpers.getValue("zr", 0)),
-      interval: parseFloat(helpers.getValue("i", ( () => {
-        if (canvas.width > canvas.height) {
-          return 0.3 * 2 / canvas.height;
-        } else {
-          return 0.3 * 2 / canvas.width;
-        }
-      } )()))
+      interval: parseFloat(helpers.getValue("i", getInitialInterval()))
     },
     yPixel: 0, // the Y value of the canvas row we are on, used to track how close we are to being done
     numUpdates: 0, // used for batch updating to only update DOM once per tick
@@ -97,6 +99,8 @@
     getYMin() {
       return m.state.zi - (m.state.interval * canvas.height / 2);
     },
+
+    getInitialInterval,
 
     // https://gist.github.com/mjackson/5311256#file-color-conversion-algorithms-js-L119
     hsvToRgb(h, s, v) {
@@ -276,6 +280,18 @@
       }
     },
 
+    reset() {
+      m.setState({
+        maxIterations: 50,
+        escapeRadius: 5,
+        color: false,
+        zi: 0,
+        zr: 0,
+        interval: m.getInitialInterval()
+      });
+      m.y = m.getYMax();
+    },
+
     bindListeners() {
       window.addEventListener("popstate", m.onPopState);
 
@@ -293,6 +309,8 @@
         };
 
       } )());
+
+      helpers.getEl("reset").addEventListener("click", m.reset);
 
       // INPUT CONTROLS
       helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
