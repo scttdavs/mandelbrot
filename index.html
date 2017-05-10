@@ -6,6 +6,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/> <!--320-->
     <link rel="shortcut icon" type="image/x-icon" href="./mandelbrot.png">
     <link href="./styles.css" media="all" rel="stylesheet">
+
+    <!-- social platform sharing -->
+    <!-- <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@scttdavs">
+    <meta name="twitter:creator" content="@scttdavs">
+    <meta name="twitter:title" content="{{ page.title }}">
+    <meta name="twitter:description" content="{{ page.content | strip_html }}">
+    <meta name="twitter:image" content="{{ site.url }}/images/photos/{{ page.name }}.jpg">
+    <meta property="og:title" content="{{ page.title }}">
+    <meta property="og:url" content="{{ site.url }}{{ page.url }}">
+    <meta property="og:image" content="{{ site.url }}/images/photos/{{ page.name }}.jpg">
+    <meta property="og:image:height" content="{{ page.height }}">
+    <meta property="og:image:width" content="{{ page.width }}">
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:site_name" content="Scott Davis">
+    <meta property="og:description" content="{{ page.content | strip_html }}"> -->
+
+    <script>
+      var _gaq = _gaq || [];
+      _gaq.push(["_setAccount", "UA-9400337-1"]);
+      _gaq.push(["_trackPageview"]);
+      (function () {
+      var e = document.createElement("script");
+      e.type = "text/javascript";
+      e.async = !0;
+      e.src = ("https:" == document.location.protocol ? "https://ssl" : "http://www") + ".google-analytics.com/ga.js";
+      var t = document.getElementsByTagName("script")[0];
+      t.parentNode.insertBefore(e, t)
+      })();
+    </script>
   </head>
   <body onload="mandlebrot.m.init()">
     <div id="navIcon">
