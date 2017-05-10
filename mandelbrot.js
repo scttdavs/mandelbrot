@@ -345,6 +345,21 @@
           zoomBox = null;
         });
       });
+
+      const controls = helpers.getEl("controls");
+
+      // nav icon
+      helpers.getEl("navIcon").addEventListener("click", (e) => {
+        const el = e.target.nodeName === "SPAN" ? e.target.parentNode : e.target;
+        const className = "open";
+        el.classList.toggle(className);
+
+        if (el.classList.contains(className)) {
+          controls.style.left = "0px";
+        } else {
+          controls.style.left = "-200px";
+        }
+      });
     },
 
     initCanvas() {
