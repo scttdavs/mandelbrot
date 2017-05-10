@@ -34,7 +34,8 @@ body {
   }
 }
 
-#reset {
+#reset,
+#download {
   background-color: #FF00FF;
   border: 0;
   border-radius: 3px;
@@ -43,10 +44,26 @@ body {
   width: 100%;
   padding: 8px 12px;
   margin-top: 15px;
+  cursor: pointer;
+  transition: background-color .2s;
+}
+
+#reset:hover {
+  background-color: #E200E2;
+}
+
+#download {
+  background-color: #EEEEEE;
+  color: #FF00FF;
+}
+
+#download:hover {
+  background-color: #DDDDDD;
 }
 
 @media (min-width: 480px) {
-  #reset {
+  #reset,
+  #download {
     font-size: 12px;
   }
 }
@@ -176,7 +193,7 @@ label {
 
 input {
   border: 0;
-  background-color: #eeeeee;
+  background-color: #EEEEEE;
   padding: 8px 10px;
   margin-top: 2px;
   border-radius: 3px;
