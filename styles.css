@@ -5,8 +5,6 @@ body {
 #canvas,
 #canvasOverlay {
   position: absolute;
-  width: 100%;
-  height: 100%;
   z-index: 10
 }
 
@@ -20,11 +18,105 @@ body {
   padding: 20px 30px;
   background-color: rgba(255, 255, 255, 0.8);
   position: absolute;
+  overflow: auto;
   z-index: 999;
-  top: 0;
-  right: 0;
+  left: -200px;
   height: 100%;
   max-width: 200px;
+  transition: left 0.2s;
+}
+
+@media (min-width: 480px) {
+  #controls {
+    /* this is overridden with js for mobile menu */
+    left: auto !important;
+    right: 0;
+  }
+}
+
+#navIcon {
+  width: 40px;
+  height: 15px;
+  position: absolute;
+  top: 25px;
+  right: 25px;
+  display: block;
+  transition: right 0.2s;
+  background-color: transparent;
+  z-index: 1000;
+  -webkit-transform: rotate(0deg);
+  -moz-transform: rotate(0deg);
+  -o-transform: rotate(0deg);
+  transform: rotate(0deg);
+  -webkit-transition: .4s ease-in-out;
+  -moz-transition: .4s ease-in-out;
+  -o-transition: .4s ease-in-out;
+  transition: .4s ease-in-out;
+  cursor: pointer;
+}
+
+@media (min-width: 480px) {
+  #navIcon {
+    display: none;
+  }
+}
+
+#navIcon span {
+  display: block;
+  position: absolute;
+  height: 5px;
+  width: 100%;
+  background-color: #FF00FF;
+  border-radius: 5px;
+  opacity: 1;
+  left: 0;
+  -webkit-transform: rotate(0deg);
+  -moz-transform: rotate(0deg);
+  -o-transform: rotate(0deg);
+  transform: rotate(0deg);
+  -webkit-transition: .2s ease-in-out;
+  -moz-transition: .2s ease-in-out;
+  -o-transition: .2s ease-in-out;
+  transition: .2s ease-in-out;
+}
+
+#navIcon span:nth-child(1) {
+  top: 0px;
+}
+
+#navIcon span:nth-child(2),
+#navIcon span:nth-child(3) {
+  top: 16px;
+}
+
+#navIcon span:nth-child(4) {
+  top: 32px;
+}
+
+#navIcon.open span:nth-child(1) {
+  top: 14px;
+  width: 0%;
+  left: 50%;
+}
+
+#navIcon.open span:nth-child(2) {
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+#navIcon.open span:nth-child(3) {
+  -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+}
+
+#navIcon.open span:nth-child(4) {
+  top: 14px;
+  width: 0%;
+  left: 50%;
 }
 
 .control {
@@ -35,6 +127,7 @@ h1 {
   color: #FF00FF;
   font-weight: 900;
   font-family: arial black, helvetica, arial, sans-serif;
+  margin-top: 3px;
 }
 
 h1 img {
