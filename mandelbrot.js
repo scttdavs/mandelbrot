@@ -312,6 +312,8 @@
 
       helpers.getEl("reset").addEventListener("click", m.reset);
 
+      helpers.getEl("download").addEventListener("click", () => window.open(canvas.toDataURL("image/png"), "_blank"));
+
       // INPUT CONTROLS
       helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
       helpers.getEl("escapeRadius").addEventListener("change", (e) => m.setState("escapeRadius", parseInt(e.target.value)));
