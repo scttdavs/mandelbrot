@@ -316,7 +316,17 @@
       helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
       helpers.getEl("escapeRadius").addEventListener("change", (e) => m.setState("escapeRadius", parseInt(e.target.value)));
       helpers.getEl("color").addEventListener("change", (e) => m.setState("color", e.target.checked));
-      helpers.getEl("julia").addEventListener("change", (e) => m.setState("julia", e.target.checked));
+      helpers.getEl("julia").addEventListener("change", (e) => {
+        m.setState({
+          maxIterations: 50,
+          escapeRadius: 5,
+          julia: e.target.checked,
+          zi: 0,
+          zr: 0,
+          interval: m.getInitialInterval()
+        });
+        m.y = m.getYMax();
+      });
       helpers.getEl("ci").addEventListener("change", (e) => m.setState("ci", parseFloat(e.target.value)));
       helpers.getEl("cr").addEventListener("change", (e) => m.setState("cr", parseFloat(e.target.value)));
 

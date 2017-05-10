@@ -1,7 +1,7 @@
 {
   "name": "mandelbrot",
   "version": "0.0.1",
-  "description": "Mandelbrot viewer",
+  "description": "Javascript-based Mandelbrot viewer.",
   "main": "index.html",
   "scripts": {
     "test": "node_modules/karma/bin/karma start",
