@@ -364,10 +364,13 @@
             return pixel * m.state.interval;
           };
 
+          const xStartValue = zoomBox[0] < zoomBox[2] ? zoomBox[0] : zoomBox[2];
+          const yStartValue = zoomBox[1] < zoomBox[3] ? zoomBox[1] : zoomBox[3];
+
           m.setState({
             interval: Math.abs(getVal(zoomBox[2]) - getVal(zoomBox[0])) / canvas.width,
-            zr: m.getXMin() + getVal(zoomBox[0]) + getVal(Math.abs(zoomBox[2] - zoomBox[0]) / 2),
-            zi: m.getYMax() - getVal(zoomBox[1]) - getVal(Math.abs(zoomBox[3] - zoomBox[1]) / 2)
+            zr: m.getXMin() + getVal(xStartValue) + getVal(Math.abs(zoomBox[2] - zoomBox[0]) / 2),
+            zi: m.getYMax() - getVal(yStartValue) - getVal(Math.abs(zoomBox[3] - zoomBox[1]) / 2)
           });
 
           m.y = m.getYMax();
