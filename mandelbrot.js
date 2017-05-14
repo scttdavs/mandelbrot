@@ -341,6 +341,15 @@
         });
       });
 
+      // store on m to test?
+      const getDragBoxY = (y1, x1, x2, isDown) => {
+        if (isDown) {
+          return y1 + (( x2 - x1) / m.ratio);
+        } else {
+          return y1 - (( x2 - x1) / m.ratio);
+        }
+      };
+
       ["mousemove", "touchmove"].forEach((moveEvent) => {
         canvasOverlay.addEventListener(moveEvent, (e) => {
           if (zoomBox) {
@@ -349,7 +358,18 @@
 
             // draw new box keeping aspect ratio
             zoomBox[2] = e.clientX || e.touches[0].clientX;
-            zoomBox[3] = zoomBox[1] + (( (e.clientX || e.touches[0].clientX) - zoomBox[0]) / m.ratio);
+            const y = e.clientY || e.touches[0].clientY;
+            let isDown = false;
+            // messy but gives us fixed drag box sizing and from any direction
+            if (zoomBox[2] > zoomBox[0]) {
+              // dragging to right
+              if (zoomBox[1] < y) isDown = true; // dragging down
+            } else {
+              // dragging to left
+              if (zoomBox[1] > y) isDown = true; // dragging down
+            }
+            zoomBox[3] = getDragBoxY(zoomBox[1], zoomBox[0], zoomBox[2], isDown);
+
 
             m.overlayCtx.strokeRect(zoomBox[0], zoomBox[1], zoomBox[2] - zoomBox[0], zoomBox[3] - zoomBox[1]);
           }
