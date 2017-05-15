@@ -171,8 +171,14 @@ h1 img {
   margin-left: 3px;
 }
 
+p {
+  font-size: 12px;
+  color: #777;
+}
+
 label,
 span,
+p,
 .hint {
   font-family: helvetica, arial, sans-serif;
 }
