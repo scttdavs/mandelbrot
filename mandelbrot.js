@@ -1,4 +1,4 @@
-/* globals document, window, history, define */
+/* globals document, window, history, define, requestAnimationFrame */
 "use strict";
 
 !function (name, context, definition) {
@@ -202,12 +202,12 @@
 
       if (m.yPixel <= window.innerHeight) {
         // not done, keep drawing
-        if (Date.now() - m.lastUpdatedAt > 200) {
+        if (Date.now() - m.lastUpdatedAt > 75) {
           // throttle updating DOM
           m.lastUpdatedAt = Date.now();
           m.updateProgressLine(m.yPixel);
-          // go to next tick so DOM can update
-          setTimeout(m.draw, 0);
+          // go to next animation frame so DOM can update
+          requestAnimationFrame(m.draw);
         } else {
           m.draw();
         }
@@ -271,7 +271,7 @@
         m.numUpdates++;
         m.state[id] = value;
 
-        setTimeout(m.render.bind(this, noPushState), 0);
+        requestAnimationFrame(m.render.bind(this, noPushState));
       } else {
         // object
         for (let prop in id) {
@@ -312,7 +312,14 @@
 
       helpers.getEl("reset").addEventListener("click", m.reset);
 
-      helpers.getEl("download").addEventListener("click", () => window.open(canvas.toDataURL("image/png"), "_blank"));
+      helpers.getEl("download").addEventListener("click", () => {
+        const string = canvas.toDataURL("image/png");
+        const iframe = `<iframe src='${string}' frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe></iframe>`;
+        const win = window.open("", "_blank");
+        win.document.open();
+        win.document.write(iframe);
+        win.document.close();
+      });
 
       // INPUT CONTROLS
       helpers.getEl("maxIterations").addEventListener("change", (e) => m.setState("maxIterations", parseInt(e.target.value)));
