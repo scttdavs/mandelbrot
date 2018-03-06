@@ -1,4 +1,4 @@
-/* globals document, window, history, define */
+/* globals document, window, history, define, requestAnimationFrame */
 "use strict";
 
 !function (name, context, definition) {
@@ -202,12 +202,12 @@
 
       if (m.yPixel <= window.innerHeight) {
         // not done, keep drawing
-        if (Date.now() - m.lastUpdatedAt > 200) {
+        if (Date.now() - m.lastUpdatedAt > 75) {
           // throttle updating DOM
           m.lastUpdatedAt = Date.now();
           m.updateProgressLine(m.yPixel);
-          // go to next tick so DOM can update
-          setTimeout(m.draw, 0);
+          // go to next animation frame so DOM can update
+          requestAnimationFrame(m.draw);
         } else {
           m.draw();
         }
@@ -271,7 +271,7 @@
         m.numUpdates++;
         m.state[id] = value;
 
-        setTimeout(m.render.bind(this, noPushState), 0);
+        requestAnimationFrame(m.render.bind(this, noPushState));
       } else {
         // object
         for (let prop in id) {
