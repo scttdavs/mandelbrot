@@ -1,6 +1,8 @@
 /* globals document, window, history, define, requestAnimationFrame */
 "use strict";
 
+const { AsBind } = AsBindIIFE;
+
 !function (name, context, definition) {
   if (typeof define == "function") define(definition);
   else if (typeof module != "undefined") module.exports = definition();
@@ -102,46 +104,6 @@
 
     getInitialInterval,
 
-    // https://gist.github.com/mjackson/5311256#file-color-conversion-algorithms-js-L119
-    hsvToRgb(h, s, v) {
-      let r, g, b;
-
-      const i = Math.floor(h * 6);
-      const f = h * 6 - i;
-      const p = v * (1 - s);
-      const q = v * (1 - f * s);
-      const t = v * (1 - (1 - f) * s);
-
-      switch (i % 6) {
-        case 0: r = v, g = t, b = p; break;
-        case 1: r = q, g = v, b = p; break;
-        case 2: r = p, g = v, b = t; break;
-        case 3: r = p, g = q, b = v; break;
-        case 4: r = t, g = p, b = v; break;
-        case 5: r = v, g = p, b = q; break;
-      }
-
-      return [ r * 255, g * 255, b * 255 ];
-    },
-
-    getColor(iterations) {
-      // smooth color by adjusting iteration count
-      const n = iterations.number - Math.log2(Math.log2(iterations.absoluteValue));
-
-      // grayscale
-      if (!m.state.color) {
-        const value = 255 - (n / m.state.maxIterations * 255);
-        return [value, value, value];
-      }
-
-      // color
-      const value = n / m.state.maxIterations;
-
-      // adjusting hue and value to make colors look better (blue only)
-      // return m.hsvToRgb(.5 + value / 2, 1, 1 - value);
-      return m.hsvToRgb(Math.abs(value), 1, 1 - value);
-    },
-
     getIterations(real, imaginary) {
       let Zr = m.state.julia ? real : 0,
           Zi = m.state.julia ? imaginary : 0,
@@ -181,7 +143,14 @@
       // build line of pixel data to render
       for(; x <= xMax; x += m.state.interval) {
         const iterations = m.getIterations(x, m.y);
-        const color = m.getColor(iterations);
+        const color = m.getColor(
+          iterations.number,
+          iterations.absoluteValue,
+          m.state.maxIterations,
+          m.state.color ? 1 : 0
+        );
+
+        // console.log("TEST", m.test(iterations.number, iterations.absoluteValue, m.state.maxIterations, m.state.color ? 1 : 0));
 
         m.imgData.data[offset++] = color[0];
         m.imgData.data[offset++] = color[1];
@@ -422,7 +391,7 @@
       });
     },
 
-    initCanvas() {
+    async initCanvas(cb) {
       canvas.width  = window.innerWidth;
       canvas.height = window.innerHeight;
       canvasOverlay.width  = window.innerWidth;
@@ -443,31 +412,28 @@
       var mem = new Uint16Array(memory.buffer);
 
       // Fetch and instantiate the module
-      fetch("build/compute.wasm")
-        .then(response => response.arrayBuffer())
-        .then(buffer => WebAssembly.instantiate(buffer, {
-          env: {
-            memory,
-            abort: () => console.log("Abort!")
-          },
-          Math
-        }))
-        .then(module => {
-          console.log(module);
-          var exports = module.instance.exports;
-          var add = exports.add;
-          console.log("ADDING", add(1, 2));
-        }).catch(err => {
-          console.log("Failed to load WASM: " + err.message + " (ad blocker, maybe?)");
-          console.log(err.stack);
-        });
+      var wasm = fetch("build/compute.wasm");
+      const asBindInstance = await AsBind.instantiate(wasm, {
+        env: {
+          memory,
+          abort: () => console.log("Abort!")
+        },
+        Math
+      });      
+      var exports = asBindInstance.exports;
+      var log = exports.myExportedFunctionThatTakesAString;
+      m.getColor = exports.getColor;
+      console.log(exports);
+      console.log("LOGGING", log("hello"));
+      cb();
     },
 
     init() {
       m.bindListeners();
-      m.initCanvas();
-      m.render(true);
-      m.pushState(true);
+      m.initCanvas(() => {
+        m.render(true);
+        m.pushState(true);
+      });
     }
   };
 
