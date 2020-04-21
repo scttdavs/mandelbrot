@@ -436,6 +436,31 @@
       m.ratio = canvas.width / canvas.height;
 
       m.imgData = m.ctx.createImageData(canvas.width, 1);
+
+      var byteSize = (canvas.width * canvas.height) << 1; // discrete color indices in range [0, 2047] (here: 2b per pixel)
+      // Compute the size of and instantiate the module's memory
+      var memory = new WebAssembly.Memory({ initial: ((byteSize + 0xffff) & ~0xffff) >>> 16 });
+      var mem = new Uint16Array(memory.buffer);
+
+      // Fetch and instantiate the module
+      fetch("build/compute.wasm")
+        .then(response => response.arrayBuffer())
+        .then(buffer => WebAssembly.instantiate(buffer, {
+          env: {
+            memory,
+            abort: () => console.log("Abort!")
+          },
+          Math
+        }))
+        .then(module => {
+          console.log(module);
+          var exports = module.instance.exports;
+          var add = exports.add;
+          console.log("ADDING", add(1, 2));
+        }).catch(err => {
+          console.log("Failed to load WASM: " + err.message + " (ad blocker, maybe?)");
+          console.log(err.stack);
+        });
     },
 
     init() {
