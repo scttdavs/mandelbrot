@@ -6,7 +6,12 @@
   "scripts": {
     "test": "node_modules/karma/bin/karma start",
     "start": "http-server -c-1",
-    "uglify": "grunt uglify"
+    "uglify": "grunt uglify",
+    "asbuild:untouched": "asc assembly/index.ts -b build/untouched.wasm -t build/untouched.wat --validate --sourceMap --debug",
+    "asbuild:optimized": "asc assembly/index.ts -b build/optimized.wasm -t build/optimized.wat --validate --sourceMap --optimize",
+    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized",
+    "asc": "asc",
+    "build": "npm run asc -- assembly/compute.ts -b build/compute.wasm --optimize"
   },
   "repository": {
     "type": "git",
@@ -23,6 +28,7 @@
   },
   "homepage": "https://github.com/scttdavs/mandelbrot#readme",
   "devDependencies": {
+    "assemblyscript": "^0.9.4",
     "chai": "^3.5.0",
     "coveralls": "^2.11.9",
     "eslint": "^3.18.0",
@@ -41,5 +47,6 @@
     "mocha": "^2.4.5",
     "mocha-lcov-reporter": "^1.2.0",
     "phantomjs-prebuilt": "^2.1.7"
-  }
+  },
+  "dependencies": {}
 }
